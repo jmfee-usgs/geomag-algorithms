@@ -3,7 +3,7 @@
 
 import argparse
 import sys
-from obspy.core import UTCDateTime
+from obspy.core import Stream, UTCDateTime
 from algorithm import algorithms
 import TimeseriesUtility
 from TimeseriesFactoryException import TimeseriesFactoryException
@@ -43,6 +43,69 @@ class Controller(object):
         self._algorithm = algorithm
         self._outputFactory = outputFactory
 
+    def _get_input_timeseries(self, observatory, channels, starttime, endtime):
+        """Get input timeseries for requested options.
+
+        Parameters
+        ----------
+        observatory : array_like
+            observatories to request.
+        channels : array_like
+            channels to request.
+        starttime : obspy.core.UTCDateTime
+            time of first sample to request.
+        endtime : obspy.core.UTCDateTime
+            time of last sample to request.
+
+        Returns
+        -------
+        timeseries : obspy.core.Stream
+        """
+        timeseries = Stream()
+        for obs in list(observatory):
+            # get input interval for observatory
+            # do this per observatory in case an algorithm needs different
+            # amounts of data from different observatories
+            input_start, input_end = self._algorithm.get_input_interval(
+                    start=starttime,
+                    end=endtime,
+                    observatory=obs,
+                    channels=channels)
+            timeseries += self._inputFactory.get_timeseries(
+                    observatory=obs,
+                    starttime=input_start,
+                    endtime=input_end,
+                    channels=channels)
+        return timeseries
+
+    def _get_output_timeseries(self, observatory, channels, starttime,
+            endtime):
+        """Get input timeseries for requested options.
+
+        Parameters
+        ----------
+        observatory : array_like
+            observatories to request.
+        channels : array_like
+            channels to request.
+        starttime : obspy.core.UTCDateTime
+            time of first sample to request.
+        endtime : obspy.core.UTCDateTime
+            time of last sample to request.
+
+        Returns
+        -------
+        timeseries : obspy.core.Stream
+        """
+        timeseries = Stream()
+        for obs in list(observatory):
+            timeseries += self._outputFactory.get_timeseries(
+                observatory=obs,
+                starttime=starttime,
+                endtime=endtime,
+                channels=channels)
+        return timeseries
+
     def run(self, options):
         """run controller
         Parameters
@@ -51,23 +114,35 @@ class Controller(object):
             The dictionary of all the command line arguments. Could in theory
             contain other options passed in by the controller.
         """
+        self._run(options)
+
+    def _run(self, options, timeseries=None):
+        """run controller implementation.
+
+        Parameters
+        ----------
+        options: dictionary
+            Dictionary of all command line arguments.
+        timeseries : obspy.core.Stream
+            Used by run_as_update to save lookup.
+        """
         algorithm = self._algorithm
         input_channels = algorithm.get_input_channels()
+        # TODO: map from inputs
         output_channels = self._get_output_channels(
                 algorithm.get_output_channels(),
                 options.outchannels)
-        # get input
-        start, end = self._algorithm.get_input_interval(
-                start=options.starttime,
-                end=options.endtime)
-        timeseries = self._inputFactory.get_timeseries(
-                starttime=start,
-                endtime=end,
-                channels=input_channels)
+        if timeseries is None:
+            timeseries = self._get_input_timeseries(
+                    observatory=options.observatory,
+                    starttime=options.starttime,
+                    endtime=options.endtime,
+                    channels=input_channels)
         if timeseries.count() == 0:
             return
         # process
         processed = algorithm.process(timeseries)
+        # TODO: map to outputs
         # output
         self._outputFactory.put_timeseries(
                 timeseries=processed,
@@ -100,7 +175,8 @@ class Controller(object):
                 algorithm.get_output_channels(),
                 options.outchannels)
         # request output to see what has already been generated
-        output_timeseries = self._outputFactory.get_timeseries(
+        output_timeseries = self._get_output_timeseries(
+                observatory=options.observatory,
                 starttime=options.starttime,
                 endtime=options.endtime,
                 channels=output_channels)
@@ -109,33 +185,32 @@ class Controller(object):
         output_gaps = TimeseriesUtility.get_merged_gaps(
                 TimeseriesUtility.get_stream_gaps(output_timeseries))
         for output_gap in output_gaps:
-            input_start, input_end = algorithm.get_input_interval(
-                    start=output_gap[0],
-                    end=output_gap[1])
-            input_timeseries = self._inputFactory.get_timeseries(
-                    starttime=input_start,
-                    endtime=input_end,
+            input_timeseries = self._get_input_timeseries(
+                    observatory=options.observatory,
+                    starttime=output_gap.start,
+                    endtime=output_gap.end,
                     channels=input_channels)
             if not algorithm.can_produce_data(
-                    starttime=output_gap[0],
-                    endtime=output_gap[1],
+                    starttime=output_gap.start,
+                    endtime=output_gap.end,
                     stream=input_timeseries):
                 continue
             # check for fillable gap at start
-            if output_gap[0] == options.starttime:
+            if output_gap.starttime == options.starttime:
                 # found fillable gap at start, recurse to previous interval
                 interval = options.endtime - options.starttime
                 self.run_as_update(ObjectView({
+                    'observatory': options.observatory,
                     'outchannels': options.outchannels,
                     'starttime': options.starttime - interval - delta,
                     'endtime': options.starttime - delta
                 }))
             # fill gap
-            self.run(ObjectView({
+            self._run(ObjectView({
                 'outchannels': options.outchannels,
-                'starttime': output_gap[0],
-                'endtime': output_gap[1]
-            }))
+                'starttime': output_gap.start,
+                'endtime': output_gap.end
+            }), input_timeseries)
 
     def _get_output_channels(self, algorithm_channels, commandline_channels):
         """get output channels
@@ -347,7 +422,8 @@ def parse_args(args):
             help='UTC date YYYY-MM-DD HH:MM:SS')
 
     parser.add_argument('--observatory',
-            help='Observatory code ie BOU, CMO, etc')
+            help='Observatory code ie BOU, CMO, etc',
+            nargs='*')
     parser.add_argument('--inchannels',
             nargs='*',
             help='Channels H, E, Z, etc')
@@ -373,6 +449,16 @@ def parse_args(args):
             type=int,
             default=2060,
             help='Input port # for edge input, defaults to 2060')
+    parser.add_argument('--input-edge-channel',
+            action='append',
+            default=None,
+            help='map from EDGE channel names to internal channel names',
+            nargs=2)
+    parser.add_argument('--output-edge-channel',
+            action='append',
+            default=None,
+            help='map from EDGE channel names to internal channel names',
+            nargs=2)
     parser.add_argument('--output-edge-port',
             type=int,
             dest='edge_write_port',

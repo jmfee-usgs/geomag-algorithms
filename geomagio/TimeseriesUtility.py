@@ -2,6 +2,17 @@
 import numpy
 
 
+class TimeseriesGap(object):
+
+    def __init__(self, start, end, next_start):
+        self.start = start
+        self.end = end
+        self.next_start = next_start
+
+    def __repr__(self):
+        return '[' + str(self.start) + ' => ' + str(self.end) + ']'
+
+
 def get_stream_gaps(stream):
     """Get gaps in a given stream
     Parameters
@@ -40,31 +51,30 @@ def get_trace_gaps(trace):
     each gap is an array [start of gap, end of gap, next sample]
     """
     gaps = []
-    gap = None
     data = trace.data
     stats = trace.stats
+    start = None
     starttime = stats.starttime
     length = len(data)
     delta = stats.delta
     for i in xrange(0, length):
         if numpy.isnan(data[i]):
-            if gap is None:
+            if start is None:
                 # start of a gap
-                gap = [starttime + i * delta]
+                start = starttime + i * delta
         else:
-            if gap is not None:
-                # end of a gap
-                gap.extend([
-                        starttime + (i - 1) * delta,
-                        starttime + i * delta])
-                gaps.append(gap)
-                gap = None
+            if start is not None:
+                gaps.append(TimeseriesGap(
+                        start=start,
+                        end=starttime + (i - 1) * delta,
+                        next_start=starttime + i * delta))
+                start = None
     # check for gap at end
-    if gap is not None:
-        gap.extend([
-                starttime + (length - 1) * delta,
-                starttime + length * delta])
-        gaps.append(gap)
+    if start is not None:
+        gaps.append(TimeseriesGap(
+                start=start,
+                end=starttime + (length - 1) * delta,
+                next_start=starttime + length * delta))
     return gaps
 
 
@@ -89,7 +99,7 @@ def get_merged_gaps(gaps):
     for key in gaps:
         merged_gaps.extend(gaps[key])
     # sort gaps so earlier gaps are before later gaps
-    sorted_gaps = sorted(merged_gaps, key=lambda gap: gap[0])
+    sorted_gaps = sorted(merged_gaps, key=lambda gap: gap.start)
     # merge gaps that overlap
     merged_gaps = []
     merged_gap = None
@@ -97,16 +107,16 @@ def get_merged_gaps(gaps):
         if merged_gap is None:
             # start of gap
             merged_gap = gap
-        elif gap[0] > merged_gap[2]:
+        elif gap.start > merged_gap.next_start:
             # next gap starts after current gap ends
             merged_gaps.append(merged_gap)
             merged_gap = gap
-        elif gap[0] <= merged_gap[2]:
+        elif gap.start <= merged_gap.next_start:
             # next gap starts at or before next data
-            if gap[1] > merged_gap[1]:
+            if gap.end > merged_gap.end:
                 # next gap ends after current gap ends, extend current
-                merged_gap[1] = gap[1]
-                merged_gap[2] = gap[2]
+                merged_gap.end = gap.end
+                merged_gap.next_start = gap.next_start
     if merged_gap is not None:
         merged_gaps.append(merged_gap)
     return merged_gaps
