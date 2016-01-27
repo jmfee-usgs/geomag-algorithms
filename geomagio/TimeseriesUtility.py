@@ -1,16 +1,6 @@
 """Timeseries Utilities"""
 import numpy
-
-
-class TimeseriesGap(object):
-
-    def __init__(self, start, end, next_start):
-        self.start = start
-        self.end = end
-        self.next_start = next_start
-
-    def __repr__(self):
-        return '[' + str(self.start) + ' => ' + str(self.end) + ']'
+from TimeseriesGap import TimeseriesGap
 
 
 def get_stream_gaps(stream):

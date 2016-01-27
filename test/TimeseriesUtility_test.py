@@ -2,8 +2,7 @@
 from nose.tools import assert_equals
 from StreamConverter_test import __create_trace
 import numpy
-from geomagio import TimeseriesUtility
-from geomagio.Util import ObjectView
+from geomagio import TimeseriesGap, TimeseriesUtility
 from obspy.core import Stream, UTCDateTime
 
 
@@ -62,24 +61,21 @@ def test_get_merged_gaps():
     merged = TimeseriesUtility.get_merged_gaps({
         'H': [
             # gap for 2 seconds, that starts after next gap
-            ObjectView({
-                'start': UTCDateTime('2015-01-01T00:00:01Z'),
-                'end': UTCDateTime('2015-01-01T00:00:03Z'),
-                'next_start': UTCDateTime('2015-01-01T00:00:04Z')
-            })
+            TimeseriesGap(
+                start=UTCDateTime('2015-01-01T00:00:01Z'),
+                end=UTCDateTime('2015-01-01T00:00:03Z'),
+                next_start=UTCDateTime('2015-01-01T00:00:04Z'))
         ],
         # gap for 1 second, that occurs before previous gap
         'Z': [
-            ObjectView({
-                'start': UTCDateTime('2015-01-01T00:00:00Z'),
-                'end': UTCDateTime('2015-01-01T00:00:00Z'),
-                'next_start': UTCDateTime('2015-01-01T00:00:01Z')
-            }),
-            ObjectView({
-                'start': UTCDateTime('2015-01-01T00:00:05Z'),
-                'end': UTCDateTime('2015-01-01T00:00:07Z'),
-                'next_start': UTCDateTime('2015-01-01T00:00:08Z')
-            }),
+            TimeseriesGap(
+                start=UTCDateTime('2015-01-01T00:00:00Z'),
+                end=UTCDateTime('2015-01-01T00:00:00Z'),
+                next_start=UTCDateTime('2015-01-01T00:00:01Z')),
+            TimeseriesGap(
+                start=UTCDateTime('2015-01-01T00:00:05Z'),
+                end=UTCDateTime('2015-01-01T00:00:07Z'),
+                next_start=UTCDateTime('2015-01-01T00:00:08Z'))
         ]
     })
     assert_equals(len(merged), 2)

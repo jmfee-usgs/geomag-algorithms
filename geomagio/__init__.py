@@ -8,6 +8,7 @@ from Controller import Controller
 from ObservatoryMetadata import ObservatoryMetadata
 from TimeseriesFactory import TimeseriesFactory
 from TimeseriesFactoryException import TimeseriesFactoryException
+from TimeseriesGap import TimeseriesGap
 import TimeseriesUtility
 import Util
 
@@ -19,6 +20,7 @@ __all__ = [
     'StreamConverter',
     'TimeseriesFactory',
     'TimeseriesFactoryException',
+    'TimeseriesGap',
     'TimeseriesUtility',
     'Util',
     'Url',
