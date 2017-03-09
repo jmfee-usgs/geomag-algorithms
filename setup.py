@@ -13,6 +13,8 @@ setup(
         'geomagio.iaga2002',
         'geomagio.imfv122',
         'geomagio.imfv283',
+        'geomagio.metadata',
+        'geomagio.metadata.observatory',
         'geomagio.pcdcp',
         'geomagio.temperature',
         'geomagio.vbf'
