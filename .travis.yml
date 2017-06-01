@@ -26,7 +26,11 @@ before_install:
   - node --version
 install:
   - conda config --add channels conda-forge
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION obspy pycurl nose flake8
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION obspy pycurl nose flake8 coverage
   - source activate test-environment
   - npm install
-script: grunt lint test
+script:
+  - grunt lint test
+  - nosetests --with-coverage --cover-branches --cover-erase --cover-inclusive --cover-package=geomagio --cover-xml --cover-xml-file=coverage.xml test/*/*.py
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
