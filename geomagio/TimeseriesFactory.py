@@ -127,7 +127,7 @@ class TimeseriesFactory(object):
             for channel in channels:
                 filtered += timeseries.select(channel=channel)
             timeseries = filtered
-        timeseries.merge()
+        timeseries.merge(fill_value=numpy.nan)
         timeseries.trim(
                 starttime=starttime,
                 endtime=endtime,
