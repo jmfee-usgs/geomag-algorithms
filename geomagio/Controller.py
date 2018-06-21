@@ -490,10 +490,20 @@ def main(args):
 
     if args.observatory_foreach:
         observatory = args.observatory
+        last_exception = None
         for obs in observatory:
             args.observatory = (obs,)
             args.output_observatory = (obs,)
-            _main(args)
+            try:
+                _main(args)
+            except Exception as e:
+                # continue processing other observatories
+                print('Exception during observatory {}: {}'.format(obs, e),
+                        file=sys.stderr)
+                last_exception = e
+        if last_exception is not None:
+            print('Exceptions occurred during processing', file=sys.stderr)
+            sys.exit(1)
     else:
         _main(args)
 
