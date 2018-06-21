@@ -171,6 +171,8 @@ class IAGA2002Parser(object):
         """
         self.comments = self._merge_comments(self.comments)
         self.parse_comments()
+        if self._parsedata is None:
+            return
         self.times = self._parsedata[0]
         for channel, data in zip(self.channels, self._parsedata[1:]):
             # ignore "empty" channels

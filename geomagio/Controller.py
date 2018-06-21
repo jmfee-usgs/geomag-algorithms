@@ -1,8 +1,9 @@
 """Controller class for geomag algorithms"""
-from __future__ import absolute_import, print_function
+from __future__ import absolute_import
 from builtins import str as unicode
 
 import argparse
+import logging
 import sys
 from obspy.core import Stream, UTCDateTime
 from .algorithm import algorithms
@@ -20,6 +21,9 @@ from . import imfv122
 from . import imfv283
 from . import temperature
 from . import vbf
+
+
+LOGGER = logging.getLogger('geomagio.Controller')
 
 
 class Controller(object):
@@ -209,16 +213,16 @@ class Controller(object):
         if options.update_limit != 0:
             if update_count >= options.update_limit:
                 return
-        print('checking gaps', options.starttime, options.endtime,
-            file=sys.stderr)
         algorithm = self._algorithm
         input_channels = options.inchannels or \
                 algorithm.get_input_channels()
         output_channels = options.outchannels or \
                 algorithm.get_output_channels()
+        output_observatory = options.output_observatory
+        LOGGER.info('checking gaps %s %s %s %s', output_observatory, output_channels, options.starttime, options.endtime)
         # request output to see what has already been generated
         output_timeseries = self._get_output_timeseries(
-                observatory=options.output_observatory,
+                observatory=output_observatory,
                 starttime=options.starttime,
                 endtime=options.endtime,
                 channels=output_channels)
@@ -256,8 +260,7 @@ class Controller(object):
             # fill gap
             options.starttime = output_gap[0]
             options.endtime = output_gap[1]
-            print('processing', options.starttime, options.endtime,
-                file=sys.stderr)
+            LOGGER.info('processing %s %s', options.starttime, options.endtime)
             self.run(options, input_timeseries)
 
 
@@ -353,7 +356,10 @@ def get_output_factory(args):
     if args.output_file is not None:
         output_stream = open(args.output_file, 'wb')
     elif args.output_stdout:
-        output_stream = sys.stdout
+        try:
+            output_stream = sys.stdout.buffer
+        except:
+            output_stream = sys.stdout
     elif args.output_url is not None:
         output_url = args.output_url
         output_factory_args['urlInterval'] = args.output_url_interval
@@ -473,9 +479,12 @@ def main(args):
         args.output = 'plot'
         usingDeprecated = True
 
+    ## TODO add log configuration arguments
+    logging.basicConfig(level=logging.INFO)
+
     if usingDeprecated:
-        print('WARNING: you are using deprecated arguments,' +
-              ' please update your usage', file=sys.stderr)
+        LOGGER.warning('you are using deprecated arguments,' +
+              ' please update your usage')
     # TODO check for unused arguments.
 
     # make sure observatory is a tuple
@@ -498,11 +507,10 @@ def main(args):
                 _main(args)
             except Exception as e:
                 # continue processing other observatories
-                print('Exception during observatory {}: {}'.format(obs, e),
-                        file=sys.stderr)
+                LOGGER.exception('Exception during observatory %s', obs)
                 last_exception = e
         if last_exception is not None:
-            print('Exceptions occurred during processing', file=sys.stderr)
+            LOGGER.warning('Exceptions occurred during processing')
             sys.exit(1)
     else:
         _main(args)

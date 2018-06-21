@@ -204,10 +204,14 @@ class TimeseriesFactory(object):
                     type=type,
                     interval=interval,
                     channels=channels)
+            slice_start = urlInterval['start']
+            slice_end = urlInterval['end']
+            if slice_start != slice_end:
+                # subtract delta to omit the sample at end: `[start, end)`
+                slice_end = slice_end - delta
             url_data = timeseries.slice(
-                    starttime=urlInterval['start'],
-                    # subtract delta to omit the sample at end: `[start, end)`
-                    endtime=(urlInterval['end'] - delta))
+                    starttime=slice_start,
+                    endtime=slice_end)
             url_file = Util.get_file_from_url(url, createParentDirectory=True)
             # existing data file, merge new data into existing
             if os.path.isfile(url_file):
@@ -224,8 +228,9 @@ class TimeseriesFactory(object):
                         new_trace = url_data.select(
                                 network=trace.stats.network,
                                 station=trace.stats.station,
-                                channel=trace.stats.channel)[0]
-                        trace.stats.location = new_trace.stats.location
+                                channel=trace.stats.channel)
+                        if len(new_trace) != 0:
+                            trace.stats.location = new_trace[0].stats.location
                     url_data = TimeseriesUtility.merge_streams(
                             existing_data, url_data)
                 except IOError:
@@ -235,9 +240,13 @@ class TimeseriesFactory(object):
                     # factory only supports output
                     pass
             # pad with NaN's out to urlInterval (like get_timeseries())
+            trim_start = urlInterval['start']
+            trim_end = urlInterval['end']
+            if trim_start != trim_end:
+                trim_end = trim_end - delta
             url_data.trim(
-                starttime=urlInterval['start'],
-                endtime=(urlInterval['end'] - delta),
+                starttime=trim_start,
+                endtime=trim_end,
                 nearest_sample=False,
                 pad=True,
                 fill_value=numpy.nan)
