@@ -11,7 +11,7 @@ RUN yum install -y \
 # install conda
 ENV PATH /conda/bin:$PATH
 RUN echo 'export PATH=/conda/bin:$PATH' > /etc/profile.d/conda.sh && \
-    curl https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh \
+    curl https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
         -o ~/miniconda.sh && \
     /bin/bash ~/miniconda.sh -b -p /conda && \
     rm ~/miniconda.sh
