@@ -1,7 +1,6 @@
-"""Tests for the IMFV283 Parser class."""
+"""Tests for the miniseed.sncl module."""
 
 from nose.tools import assert_equals
-from obspy import UTCDateTime
 
 from geomagio.miniseed import sncl
 
@@ -53,9 +52,8 @@ TESTS = [
       'data_interval': 'minute'
     }
   ]
-
-
 ]
+
 
 def test_decode_sncl():
     """miniseed_test.sncl_test.test_decode_sncl()
@@ -63,6 +61,7 @@ def test_decode_sncl():
     for test in TESTS:
       actual = sncl.decode_sncl(**test[0])
       assert_equals(actual, test[1])
+
 
 def test_encode_sncl():
     """miniseed_test.sncl_test.test_encode_sncl()
