@@ -14,6 +14,7 @@ setup(
         'geomagio.imfjson',
         'geomagio.imfv122',
         'geomagio.imfv283',
+        'geomagio.miniseed',
         'geomagio.pcdcp',
         'geomagio.temperature',
         'geomagio.vbf'
