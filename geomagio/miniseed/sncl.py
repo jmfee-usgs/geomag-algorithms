@@ -31,6 +31,33 @@ TYPE_LOCATION_PREFIX    = { v:k for k,v in SEED_LOCATION_PREFIX.items() }
 
 
 def decode_sncl(network, station, channel, location):
+  """Translate SNCL to algorithms metadata.
+
+  Parameters
+  ----------
+  network: str
+    network code.
+  station: str
+    station code.
+  channel: str
+    channel code.
+  location: str
+    location code.
+
+  Returns
+  -------
+  dict with keys for Geomag metadata
+    network: str
+      Geomag network
+    observatory: str
+      Geomag observatory
+    element: str
+      Geomag element
+    data_interval: {'tenhertz', 'second', 'minute', 'hour', 'day'}
+      Geomag data interval
+    data_type: {'variation', 'adjusted', 'quasi-definitive', 'definitive'}
+      Geomag data type
+  """
   return {
     'network': network,
     'observatory': station,
@@ -40,6 +67,33 @@ def decode_sncl(network, station, channel, location):
   }
 
 def encode_sncl(network, observatory, element, data_interval, data_type):
+  """Translate algorithms metadata to SNCL.
+
+  Parameters
+  ----------
+  network: str
+    Geomag network
+  observatory: str
+    Geomag observatory
+  element: str
+    Geomag element
+  data_interval: {'tenhertz', 'second', 'minute', 'hour', 'day'}
+    Geomag data interval
+  data_type: {'variation', 'adjusted', 'quasi-definitive', 'definitive'}
+    Geomag data type
+
+  Returns
+  -------
+  dict with keys for SNCL
+    network: str
+      network code.
+    station: str
+      station code.
+    channel: str
+      channel code.
+    location: str
+      location code.
+  """
   return {
     'network': network,
     'station': observatory,
