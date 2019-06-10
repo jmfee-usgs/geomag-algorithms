@@ -2,9 +2,10 @@
 """
 from __future__ import absolute_import
 
-import .sncl as sncl
+from .sncl import decode_sncl, encode_sncl
 
 
 __all__ = [
-    'sncl'
+    'decode_sncl',
+    'encode_sncl'
 ]
