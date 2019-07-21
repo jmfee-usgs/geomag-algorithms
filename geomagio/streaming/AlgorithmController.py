@@ -29,7 +29,7 @@ class AlgorithmController(object):
         self.input = Stream()
         self.listeners = []
 
-    def on_data(self, trace):
+    def on_data(self, stream):
         """Receive data.
 
         Calls _process to check whether data is ready to be processed.
@@ -37,10 +37,13 @@ class AlgorithmController(object):
 
         Parameters
         ----------
-        trace: obspy.core.Trace|obspy.core.Stream
+        stream: obspy.core.Trace|obspy.core.Stream
             data to be added to input
         """
-        self.input += trace
+        if not isinstance(stream, Stream):
+            stream = Stream(stream)
+        for component in self.components:
+            self.input += stream.select(**component).copy()
         self.input.merge()
         output = self._process()
         if len(output) > 0:

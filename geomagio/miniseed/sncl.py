@@ -68,6 +68,34 @@ def decode_sncl(network, station, channel, location):
     }
 
 
+def decode_stream(stream):
+    """Decode SNCL for all traces in stream.
+
+    Parameters
+    ----------
+    stream: obspy.core.Stream
+        stream to decode
+
+    Returns
+    -------
+    obspy.core.Stream
+        stream with updated stats.
+    """
+    for trace in stream:
+        stats = trace.stats
+        decoded = decode_sncl(
+                stats.network,
+                stats.station,
+                stats.channel,
+                stats.location)
+        stats.network = decoded['network']
+        stats.station = decoded['observatory']
+        stats.channel = decoded['element']
+        stats.data_interval = decoded['data_interval']
+        stats.data_type = decoded['data_type']
+    return stream
+
+
 def encode_sncl(network, observatory, element, data_interval, data_type):
     """Translate algorithms metadata to SNCL.
 
@@ -104,6 +132,34 @@ def encode_sncl(network, observatory, element, data_interval, data_type):
         'location': get_sncl_location(
                 network, observatory, element, data_interval, data_type)
     }
+
+
+def encode_stream(stream):
+    """Encode SNCL for all traces in stream.
+
+    Parameters
+    ----------
+    stream: obspy.core.Stream
+        stream to decode
+
+    Returns
+    -------
+    obspy.core.Stream
+        stream with updated stats.
+    """
+    for trace in stream:
+        stats = trace.stats
+        encoded = encode_sncl(
+                stats.network,
+                stats.station,
+                stats.channel,
+                stats.data_interval,
+                stats.data_type)
+        stats.network = encoded['network']
+        stats.station = encoded['station']
+        stats.channel = encoded['channel']
+        stats.location = encoded['location']
+    return stream
 
 
 def get_data_interval(network, station, channel, location):
