@@ -1,10 +1,24 @@
-
-
 from geomagio.algorithm import Algorithm
 from obspy.core import Stream, UTCDateTime
 
 
 class AlgorithmController(object):
+    """Streaming controller for algorithm.
+
+    Parameters
+    ----------
+    components: list
+        each list item should contain kwargs to select channels distinctly.
+    algorithm: geomagio.algorithm.Algorithm
+        algorithm for processing
+    max_delay: float
+        when greater than 0, number of seconds to wait before trimming,
+        otherwise, ignored.
+    left_pad: int
+        number of samples requried preceding a data point for processing.
+    right_pad: int
+        number of samples required following a data point for processing.
+    """
     def __init__(self, components,
             algorithm=None, max_delay=0, left_pad=0, right_pad=0):
         self.components = components
@@ -16,27 +30,90 @@ class AlgorithmController(object):
         self.listeners = []
 
     def on_data(self, trace):
+        """Receive data.
+
+        Calls _process to check whether data is ready to be processed.
+        Notifies listeners if output is generated.
+
+        Parameters
+        ----------
+        trace: obspy.core.Trace|obspy.core.Stream
+            data to be added to input
+        """
         self.input += trace
         self.input.merge()
-        output = process(
-                self.input,
-                self.components,
-                self.process,
-                self.max_delay,
-                self.left_pad,
-                self.right_pad)
+        output = self._process()
         if len(output) > 0:
             self.notify_listeners(output)
 
     def notify_listeners(self, data):
+        """Call all listeners with provided data.
+
+        Parameters
+        ----------
+        data: obspy.core.Stream
+            data produced during processing
+        """
         for listener in self.listeners:
             listener.on_data(data)
 
-    def process(self, stream):
-        return self.algorithm.process(stream)
+    def _process(self):
+        """Incrementally process from input data stream.
+
+        Returns
+        -------
+        obspy.core.Stream
+            result from processing, empty if no data processed.
+        """
+        output = Stream()
+        if len(self.input) == 0:
+            # no data to process
+            return output
+        # assume uniform delta for now
+        delta = self.input[0].stats.delta
+        overlap = get_overlap(self.input, self.components)
+        if overlap:
+            if (overlap[1] - overlap[0]) \
+                    < (self.left_pad + self.right_pad) * delta:
+                # need more data for algorithm
+                return output
+            # process overlapping area
+            data = self.input.slice(
+                    starttime=overlap[0],
+                    endtime=overlap[1],
+                    nearest_sample=False)
+            output = self.algorithm.process(data)
+            # TODO: should this verify output was produced?
+            # remove input data that is no longer needed
+            trim_time = max(
+                # don't trim before starttime
+                overlap[0],
+                # don't trim data that is still needed
+                overlap[1] - (self.left_pad * delta) + delta)
+            self.input.trim(starttime=trim_time, nearest_sample=False)
+        elif self.max_delay > 0:
+            #  remove data before max delay.
+            cutoff = UTCDateTime() - (self.left_pad * delta) - self.max_delay
+            self.input.trim(starttime=cutoff, nearest_sample=False)
+        return output
 
 
 def get_overlap(stream, components):
+    """Check for overlaps between requested components.
+
+    Parameters
+    ----------
+    stream: obspy.core.Stream
+        stream with data.
+    components: list
+        list of kwargs objects to select desired components.
+
+    Returns
+    -------
+    list
+        overlapping time period as (starttime, endtime) UTCDateTime tuple,
+        or False if there is not overlap between requested components.
+    """
     # get range for requested components
     ranges = []
     missing = False
@@ -57,28 +134,3 @@ def get_overlap(stream, components):
             max(r[0] for r in ranges),
             min(r[1] for r in ranges))
     return overlap
-
-
-def process(input, components, callback, max_delay=0, left_pad=0, right_pad=0):
-    output = Stream()
-    overlap = get_overlap(input, components)
-    if overlap and (overlap[1] - overlap[0]) > (left_pad + right_pad):
-        #  process overlapping area
-        data = input.slice(
-                starttime=overlap[0],
-                endtime=overlap[1],
-                nearest_sample=False)
-        output = callback(data)
-        # remove input data that is no longer needed
-        trim_time = max(
-            # don't trim before starttime
-            overlap[0],
-            # don't trim data that is still needed
-            overlap[1] - left_pad + data[0].stats.delta)
-        # TODO: this currently leaves one extra sample
-        input.trim(starttime=trim_time, nearest_sample=False)
-    elif max_delay > 0:
-        #  remove data before max delay.
-        cutoff = UTCDateTime() - left_pad - max_delay
-        input.trim(starttime=cutoff, nearest_sample=False)
-    return output
