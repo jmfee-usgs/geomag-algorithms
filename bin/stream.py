@@ -43,6 +43,7 @@ class PrintListener(object):
         print(data)
         print(data[0].data)
 
+
 if __name__ == '__main__':
     # wire everything up
     seedlink = SeedLinkInput('cwbpub.cr.usgs.gov:18000', autoconnect=False)
@@ -70,7 +71,7 @@ if __name__ == '__main__':
 
     # simulate data
     bin = Trace(
-            numpy.array([10, 20,30, 40, 50], dtype=numpy.float64),
+            numpy.array([10, 20, 30, 40, 50], dtype=numpy.float64),
             Stats(header={
                 'network': 'NT',
                 'station': 'LLO',
