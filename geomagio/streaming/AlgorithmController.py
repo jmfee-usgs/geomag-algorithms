@@ -21,7 +21,7 @@ class AlgorithmController(object):
         output = process(
                 self.input,
                 self.components,
-                lambda d: self.process(d),
+                self.process,
                 self.max_delay,
                 self.left_pad,
                 self.right_pad)
@@ -74,7 +74,7 @@ def process(input, components, callback, max_delay=0, left_pad=0, right_pad=0):
             # don't trim before starttime
             overlap[0],
             # don't trim data that is still needed
-            overlap[1] - left_pad)
+            overlap[1] - left_pad + data[0].stats.delta)
         # TODO: this currently leaves one extra sample
         input.trim(starttime=trim_time, nearest_sample=False)
     elif max_delay > 0:

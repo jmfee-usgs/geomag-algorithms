@@ -37,7 +37,7 @@ def test_algorithm_controller():
             })
     )
     client.on_data(trace)
-    # no data "processed" yet
+    # no data ready yet
     assert_equals(len(listener.data), 0)
 
     # add overlapping data for other component
@@ -59,7 +59,6 @@ def test_algorithm_controller():
             UTCDateTime('2019-01-01T00:02:00Z'))
     assert_equals(len(output[0].data), 4)
     # client input trimmed
-    # TODO: currently leaves one extra sample
-    # assert_equals(
-    #       client.input[0].stats.starttime,
-    #       UTCDateTime('2019-01-01T00:06:00Z'))
+    assert_equals(
+            client.input[0].stats.starttime,
+            UTCDateTime('2019-01-01T00:06:00Z'))
