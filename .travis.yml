@@ -7,6 +7,8 @@ python:
   - 3.6
 install:
   - pipenv install --dev
+  # make sure pycurl is okay
+  - python -c 'import pycurl; print(pycurl.version_info())'
 script:
   - flake8 --config=.flake8 bin/ geomagio/ test/
   - nosetests -v .
