@@ -5,11 +5,8 @@ python:
   - 2.7
   - 3.5
   - 3.6
-before_install:
-  - pip install pipenv
 install:
   - pipenv install --dev
-  - pipenv shell
 script:
   - flake8 --config=.flake8 bin/ geomagio/ test/
   - nosetests -v .
