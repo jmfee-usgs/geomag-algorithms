@@ -3,10 +3,13 @@ python:
   - 2.7
   - 3.5
   - 3.6
+before_install:
+  # used to build pycurl
+  - sudo apt-get -y install libgnutls-dev
 install:
   - pipenv install --dev --skip-lock
   # make sure pycurl is okay
-  - python -c 'import pycurl; print(pycurl.version_info())'
+  - python -c 'import pycurl;import pprint;pprint.pprint(pycurl.version_info());'
 script:
   - flake8 --config=.flake8 bin/ geomagio/ test/
   - nosetests -v .
