@@ -1,6 +1,9 @@
 import json
 import urllib
+from typing import Dict, IO, List, Mapping, Optional, Union
+
 from obspy.core import UTCDateTime
+
 from .measurement import Absolute, Measurement, Reading
 
 
@@ -8,10 +11,19 @@ class WebAbsolutesFactory(object):
     """Read absolutes from web absolutes service.
     """
 
-    def __init__(self, url="https://geomag.usgs.gov/baselines/observation.json.php"):
+    def __init__(
+        self, url: str = "https://geomag.usgs.gov/baselines/observation.json.php"
+    ):
         self.url = url
 
-    def get_readings(self, observatory, starttime, endtime, include_measurements=False):
+    def get_readings(
+        self,
+        observatory: str,
+        starttime: UTCDateTime,
+        endtime: UTCDateTime,
+        include_measurements: bool = False,
+    ) -> List[Reading]:
+        """Get readings from the Web Absolutes Service."""
         args = urllib.parse.urlencode(
             {
                 "observatory": observatory,
@@ -21,40 +33,40 @@ class WebAbsolutesFactory(object):
             }
         )
         with urllib.request.urlopen(f"{self.url}?{args}") as data:
-            return self.parse_response(data, include_measurements)
+            return self.parse_json(data)
 
-    def parse_response(self, jsonstr, include_measurements=False):
+    def parse_json(self, jsonstr: IO[str]) -> List[Reading]:
+        """Parse readings from the web absolutes JSON format.
+        """
         readings = []
         response = json.load(jsonstr)
         for data in response["data"]:
             metadata = self._parse_metadata(data)
             readings.extend(
-                [
-                    self._parse_reading(metadata, r, include_measurements)
-                    for r in data["readings"]
-                ]
+                [self._parse_reading(metadata, r) for r in data["readings"]]
             )
         return readings
 
-    def _parse_absolute(self, element, data):
+    def _parse_absolute(self, element: str, data: Mapping) -> Absolute:
         return Absolute(
-            element,
-            data["absolute"],
-            data["baseline"],
-            data["start"] and UTCDateTime(data["start"]) or None,
-            data["end"] and UTCDateTime(data["end"]) or None,
-            "shift" in data and data["shift"] or 0,
-            data["valid"],
+            element=element,
+            absolute=data["absolute"],
+            baseline=data["baseline"],
+            starttime=data["start"] and UTCDateTime(data["start"]) or None,
+            endtime=data["end"] and UTCDateTime(data["end"]) or None,
+            shift="shift" in data and data["shift"] or 0,
+            valid=data["valid"],
         )
 
-    def _parse_measurement(self, data):
+    def _parse_measurement(self, data: Mapping) -> Measurement:
         return Measurement(
-            data["type"],
-            data["angle"],
-            data["time"] and UTCDateTime(data["time"]) or None,
+            measurement_type=data["type"],
+            angle=data["angle"],
+            residual=0,
+            time=data["time"] and UTCDateTime(data["time"]) or None,
         )
 
-    def _parse_metadata(self, data):
+    def _parse_metadata(self, data: Mapping) -> Dict:
         return {
             "time": data["time"],
             "reviewed": data["reviewed"],
@@ -68,16 +80,27 @@ class WebAbsolutesFactory(object):
             "reviewer": data["reviewer"],
         }
 
-    def _parse_reading(self, metadata, data, include_measurements):
+    def _parse_reading(self, metadata: Mapping, data: Mapping) -> Reading:
+        """Parse absolutes and measurements from Reading json.
+        """
         absolutes = [
             self._parse_absolute(element, data[element])
             for element in ["D", "H", "Z"]
             if element in data
         ]
         measurements = (
-            (include_measurements and "measurements" in data)
-            and [self._parse_measurement(m) for m in data["measurements"]]
-            or []
+            [self._parse_measurement(m) for m in data["measurements"]]
+            if "measurements" in data
+            else []
         )
-        return Reading(absolutes, measurements, metadata)
+        return Reading(
+            absolutes=absolutes,
+            azimuth=("mark_azimuth" in metadata and metadata["mark_azimuth"] or 0),
+            hemisphere=1,
+            measurements=measurements,
+            metadata=metadata,
+            pier_correction=(
+                "pier_correction" in metadata and metadata["pier_correction"] or 0
+            ),
+        )
 
