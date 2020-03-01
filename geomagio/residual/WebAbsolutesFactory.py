@@ -4,7 +4,7 @@ from typing import Dict, IO, List, Mapping, Optional, Union
 
 from obspy.core import UTCDateTime
 
-from .measurement import Absolute, Measurement, Reading
+from .measurement import Absolute, Measurement, MeasurementType, Reading
 
 
 class WebAbsolutesFactory(object):
@@ -60,7 +60,7 @@ class WebAbsolutesFactory(object):
 
     def _parse_measurement(self, data: Mapping) -> Measurement:
         return Measurement(
-            measurement_type=data["type"],
+            measurement_type=MeasurementType(data["type"]),
             angle=data["angle"],
             residual=0,
             time=data["time"] and UTCDateTime(data["time"]) or None,

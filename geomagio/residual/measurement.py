@@ -6,7 +6,7 @@ import numpy
 from obspy.core import UTCDateTime
 
 
-class MeasurementType(enum.Enum):
+class MeasurementType(str, enum.Enum):
     """Measurement types used during absolutes."""
 
     # declination
