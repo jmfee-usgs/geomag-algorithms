@@ -103,4 +103,3 @@ class WebAbsolutesFactory(object):
                 "pier_correction" in metadata and metadata["pier_correction"] or 0
             ),
         )
-
