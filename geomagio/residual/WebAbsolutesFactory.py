@@ -4,7 +4,10 @@ from typing import Dict, IO, List, Mapping, Optional, Union
 
 from obspy.core import UTCDateTime
 
-from .measurement import Absolute, Measurement, MeasurementType, Reading
+from .Absolute import Absolute
+from .Measurement import Measurement
+from .MeasurementType import MeasurementType
+from .Reading import Reading
 
 
 class WebAbsolutesFactory(object):
