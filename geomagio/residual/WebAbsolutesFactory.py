@@ -24,7 +24,7 @@ class WebAbsolutesFactory(object):
         observatory: str,
         starttime: UTCDateTime,
         endtime: UTCDateTime,
-        include_measurements: bool = False,
+        include_measurements: bool = True,
     ) -> List[Reading]:
         """Get readings from the Web Absolutes Service."""
         args = urllib.parse.urlencode(

@@ -13,6 +13,12 @@ class MeasurementType(str, enum.Enum):
     EAST_UP = "EastUp"
     SECOND_MARK_UP = "SecondMarkUp"
     SECOND_MARK_DOWN = "SecondMarkDown"
+
+    # meridian
+    # meridian is the average of declination measurements
+    # but recorded because calculated and used during inclination measurements.
+    MERIDIAN = "Meridian"
+
     # inclination
     SOUTH_DOWN = "SouthDown"
     NORTH_UP = "NorthUp"
