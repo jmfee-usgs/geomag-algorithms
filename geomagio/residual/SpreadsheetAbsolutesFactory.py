@@ -3,7 +3,11 @@ from typing import Dict, IO, List, Mapping, Optional, Union
 from obspy.core import UTCDateTime
 import openpyxl
 
-from .measurement import Absolute, Measurement, MeasurementType, Reading, from_dms
+from .Absolute import Absolute
+from .Measurement import Measurement
+from .MeasurementType import MeasurementType
+from .Reading import Reading
+from . import Angle
 
 
 class SpreadsheetAbsolutesFactory(object):
@@ -47,10 +51,10 @@ class SpreadsheetAbsolutesFactory(object):
         absolutes = [
             Absolute(
                 element="D",
-                absolute=from_dms(
+                absolute=Angle.from_dms(
                     degrees=int(sheet["C12"].value), minutes=float(sheet["D12"].value)
                 ),
-                baseline=from_dms(minutes=float(sheet["F12"].value)),
+                baseline=Angle.from_dms(minutes=float(sheet["F12"].value)),
                 endtime=UTCDateTime(f"{base_date}{sheet['B12'].value}"),
                 starttime=UTCDateTime(f"{base_date}{sheet['B12'].value}"),
             ),

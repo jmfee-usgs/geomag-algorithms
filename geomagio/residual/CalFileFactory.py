@@ -6,7 +6,8 @@ from typing import List
 import itertools
 from io import StringIO
 
-from .measurement import Absolute, Reading
+from .Absolute import Absolute
+from .Reading import Reading
 
 
 class CalFileFactory(object):

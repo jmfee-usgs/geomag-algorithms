@@ -1,27 +1,22 @@
 # residual module
+from __future__ import absolute_import
 
-from obspy import UTCDateTime
-
+from .Absolute import Absolute
+from . import Angle
 from .CalFileFactory import CalFileFactory
+from .Measurement import Measurement
+from .MeasurementType import MeasurementType
+from .Reading import Reading
 from .SpreadsheetAbsolutesFactory import SpreadsheetAbsolutesFactory
 from .WebAbsolutesFactory import WebAbsolutesFactory
-from .measurement import (
-    Absolute,
-    Measurement,
-    MeasurementType,
-    Reading,
-    from_dms,
-    to_dms,
-)
 
 __all__ = [
     "Absolute",
+    "Angle",
     "CalFileFactory",
     "Measurement",
     "MeasurementType",
-    "Readong",
+    "Reading",
     "SpreadsheetAbsolutesFactory",
     "WebAbsolutesFactory",
-    "from_dms",
-    "to_dms",
 ]
