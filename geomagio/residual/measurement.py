@@ -32,7 +32,9 @@ class Absolute(object):
     ----------
     element: the absolute and baseline component.
     absolute: absolute measurement.
+        nT or radians
     baseline: baseline measurement.
+        nT or radians
     starttime: time of first measurement used.
     endtime: time of last measurement used.
     shift: used to correct polarity.
@@ -56,6 +58,15 @@ class Absolute(object):
         self.endtime = endtime
         self.shift = shift
         self.valid = valid
+
+    def is_valid(self):
+        return (
+            self.valid
+            and self.absolute is not None
+            and self.baseline is not None
+            and self.endtime is not None
+            and self.starttime is not None
+        )
 
 
 class Measurement(object):
