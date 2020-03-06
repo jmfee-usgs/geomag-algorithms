@@ -65,6 +65,7 @@ def _parse_int(sheet, cell, name) -> int:
 def _parse_time(sheet, cell, name, base_date) -> UTCDateTime:
     try:
         value = sheet[cell].value
+        print(f"{base_date}{value}", value)
         return value and UTCDateTime(f"{base_date}{value}") or None
     except Exception as e:
         raise ValueError(f"Unable to parse {name} at {cell}") from e
@@ -123,7 +124,7 @@ class SpreadsheetAbsolutesFactory(object):
         if include_measurements:
             measurements, errors = self._parse_measurements(measurement_sheet, metadata)
             metadata["errors"].extend(errors)
-        absolutes = self._parse_absolutes(summary_sheet)
+        absolutes = self._parse_absolutes(summary_sheet, metadata)
         reading = Reading(
             absolutes=absolutes,
             azimuth=metadata["mark_azimuth"],
@@ -134,10 +135,10 @@ class SpreadsheetAbsolutesFactory(object):
         )
         return reading
 
-    def _parse_absolutes(self, sheet) -> List[Absolute]:
+    def _parse_absolutes(self, sheet, metadata) -> List[Absolute]:
         """Parse absolutes from a summary sheet.
         """
-        base_date = f"{sheet['H4'].value}{sheet['G4'].value}T"
+        base_date = f"{metadata['year']}{metadata['date']}T"
         absolutes = [
             Absolute(
                 element="D",
@@ -233,7 +234,7 @@ class SpreadsheetAbsolutesFactory(object):
         except ValueError as e:
             errors.append(str(e))
         return {
-            "date": measurement_sheet["C8"].value,
+            "date": f"{measurement_sheet['C8'].value:04}",
             "di_scale": measurement_sheet["K8"].value,
             "errors": errors,
             "hemisphere": hemisphere,
