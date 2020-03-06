@@ -210,40 +210,25 @@ class SpreadsheetAbsolutesFactory(object):
         """Parse metadata from various sheets.
         """
         errors = []
-        hemisphere = None
         mark_azimuth = None
-        pier_correction = None
-        temperature = None
         try:
-            azimuth_number = _parse_int(measurement_sheet, "F8", "azimuth number")
-            mark_azimuth = _parse_float(
-                constants_sheet, f"F{azimuth_number + 5}", "mark azimuth"
+            azimuth_number = measurement_sheet["F8"].value
+            mark_azimuth = Angle.from_dms(
+                minutes=constants_sheet[f"F{azimuth_number + 5}"].value
             )
-        except ValueError as e:
-            errors.append(str(e))
-        try:
-            hemisphere = _parse_int(measurement_sheet, "J8", "hemisphere")
-        except ValueError as e:
-            errors.append(str(e))
-        try:
-            pier_correction = _parse_float(constants_sheet, "H6", "pier_correction")
-        except ValueError as e:
-            errors.append(str(e))
-        try:
-            temperature = _parse_float(constants_sheet, "J58", "temperature")
-        except ValueError as e:
-            errors.append(str(e))
+        except:
+            errors.append("Unable to read mark azimuth")
         return {
             "date": f"{measurement_sheet['C8'].value:04}",
             "di_scale": measurement_sheet["K8"].value,
             "errors": errors,
-            "hemisphere": hemisphere,
-            "instrument": summary_sheet["B4"].value,
+            "hemisphere": measurement_sheet["J8"].value,
+            "instrument": f"{summary_sheet['B4'].value}",
             "mark_azimuth": mark_azimuth,
             "observer": measurement_sheet["E8"].value,
-            "pier_correction": pier_correction,
+            "pier_correction": constants_sheet["H6"].value,
             "pier_name": summary_sheet["B5"].value,
             "station": measurement_sheet["A8"].value,
-            "temperature": temperature,
+            "temperature": constants_sheet["J58"].value,
             "year": measurement_sheet["B8"].value,
         }
