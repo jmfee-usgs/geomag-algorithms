@@ -120,10 +120,11 @@ class SpreadsheetAbsolutesFactory(object):
         metadata = self._parse_metadata(
             constants_sheet, measurement_sheet, summary_sheet
         )
-        measurements = None
-        if include_measurements:
-            measurements, errors = self._parse_measurements(measurement_sheet, metadata)
-            metadata["errors"].extend(errors)
+        measurements = (
+            include_measurements
+            and self._parse_measurements(measurement_sheet, metadata)
+            or None
+        )
         absolutes = self._parse_absolutes(summary_sheet, metadata)
         reading = Reading(
             absolutes=absolutes,
@@ -143,9 +144,9 @@ class SpreadsheetAbsolutesFactory(object):
             Absolute(
                 element="D",
                 absolute=Angle.from_dms(
-                    degrees=int(sheet["C12"].value), minutes=float(sheet["D12"].value)
+                    degrees=sheet["C12"].value, minutes=sheet["D12"].value
                 ),
-                baseline=Angle.from_dms(minutes=float(sheet["F12"].value)),
+                baseline=Angle.from_dms(minutes=sheet["F12"].value),
                 endtime=UTCDateTime(f"{base_date}{sheet['B12'].value}"),
                 starttime=UTCDateTime(f"{base_date}{sheet['B12'].value}"),
             ),
@@ -166,34 +167,21 @@ class SpreadsheetAbsolutesFactory(object):
         ]
         return absolutes
 
-    def _parse_measurements(
-        self, sheet, metadata
-    ) -> (List[Measurement], List[ValueError]):
+    def _parse_measurements(self, sheet, metadata) -> List[Measurement]:
         """Parse measurements from a measurement sheet.
         """
         base_date = f"{metadata['year']}{metadata['date']}T"
-        errors = []
         measurements = []
 
         for m in SPREADSHEET_MEASUREMENTS:
             measurement_type = m["type"]
-            angle = None
-            residual = None
-            time = None
-            try:
-                if "angle" in m:
-                    angle = _parse_float(sheet, m["angle"], f"{measurement_type} angle")
-                if "residual" in m:
-                    residual = _parse_float(
-                        sheet, m["residual"], f"{measurement_type} residual"
-                    )
-                if "time" in m:
-                    time = _parse_time(
-                        sheet, m["time"], f"{measurement_type} time", base_date
-                    )
-            except ValueError as e:
-                errors.append(str(e))
-                continue
+            angle = "angle" in m and sheet[m["angle"]].value or None
+            residual = "residual" in m and sheet[m["residual"]].value or None
+            time = (
+                "time" in m
+                and UTCDateTime(f"{base_date}{sheet[m['time']].value}")
+                or None
+            )
             measurements.append(
                 Measurement(
                     measurement_type=measurement_type,
@@ -202,7 +190,7 @@ class SpreadsheetAbsolutesFactory(object):
                     time=time,
                 )
             )
-        return measurements, errors
+        return measurements
 
     def _parse_metadata(
         self, constants_sheet, measurement_sheet, summary_sheet
