@@ -1,4 +1,6 @@
+import json
 from obspy import UTCDateTime
+
 from geomagio.residual import (
     CalFileFactory,
     SpreadsheetAbsolutesFactory,
@@ -10,11 +12,8 @@ input_factory = SpreadsheetAbsolutesFactory()
 readings = input_factory.get_readings(
     observatory="CMO",
     starttime=UTCDateTime(2020, 1, 1),
-    endtime=UTCDateTime(2020, 1, 3),
+    endtime=UTCDateTime(2020, 1, 8),
 )
-
-import json
-
 print(
     json.dumps(
         readings,
@@ -25,5 +24,4 @@ print(
 
 output_factory = CalFileFactory()
 out = output_factory.format_readings(readings)
-
 print(out)

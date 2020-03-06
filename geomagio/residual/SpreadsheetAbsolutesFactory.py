@@ -46,6 +46,22 @@ SPREADSHEET_MEASUREMENTS = [
 ]
 
 
+def parse_relative_time(base_date: str, time: str) -> UTCDateTime:
+    """Parse a relative date.
+
+    Arguments
+    ---------
+    base_date: date when time occurs (YYYYMMDD)
+    time: time on base_date (HHMMSS)
+        left padded with zeros to 6 characters
+    """
+    try:
+        return UTCDateTime(f"{base_date}T{time:06}")
+    except Exception as e:
+        print(f"error parsing relative date '{base_date}T{time:06}': {e}")
+        return None
+
+
 class SpreadsheetAbsolutesFactory(object):
     """Read absolutes from residual spreadsheets.
 
@@ -72,12 +88,13 @@ class SpreadsheetAbsolutesFactory(object):
         start_filename = f"{observatory}-{starttime.datetime:%Y%j%H%M}.xlsm"
         end_filename = f"{observatory}-{endtime.datetime:%Y%j%H%M}.xlsm"
         for year in range(starttime.year, endtime.year + 1):
+            # start in observatory year directory to scan fewer files
             observatory_directory = os.path.join(
                 self.base_directory, observatory, f"{year}", observatory
             )
             for (dirpath, dirnames, filenames) in os.walk(observatory_directory):
                 for filename in filenames:
-                    if start_filename < filename < end_filename:
+                    if start_filename <= filename < end_filename:
                         readings.append(
                             self.parse_spreadsheet(os.path.join(dirpath, filename))
                         )
@@ -95,13 +112,13 @@ class SpreadsheetAbsolutesFactory(object):
         metadata = self._parse_metadata(
             constants_sheet, measurement_sheet, summary_sheet
         )
+        absolutes = self._parse_absolutes(summary_sheet, metadata["date"])
         measurements = (
             include_measurements
-            and self._parse_measurements(measurement_sheet, metadata)
+            and self._parse_measurements(measurement_sheet, metadata["date"])
             or None
         )
-        absolutes = self._parse_absolutes(summary_sheet, metadata)
-        reading = Reading(
+        return Reading(
             absolutes=absolutes,
             azimuth=metadata["mark_azimuth"],
             hemisphere=metadata["hemisphere"],
@@ -109,12 +126,12 @@ class SpreadsheetAbsolutesFactory(object):
             metadata=metadata,
             pier_correction=metadata["pier_correction"],
         )
-        return reading
 
-    def _parse_absolutes(self, sheet, metadata) -> List[Absolute]:
+    def _parse_absolutes(
+        self, sheet: openpyxl.worksheet, base_date: str
+    ) -> List[Absolute]:
         """Parse absolutes from a summary sheet.
         """
-        base_date = f"{metadata['year']}{metadata['date']}T"
         absolutes = [
             Absolute(
                 element="D",
@@ -122,39 +139,39 @@ class SpreadsheetAbsolutesFactory(object):
                     degrees=sheet["C12"].value, minutes=sheet["D12"].value
                 ),
                 baseline=Angle.from_dms(minutes=sheet["F12"].value),
-                endtime=UTCDateTime(f"{base_date}{sheet['B12'].value}"),
-                starttime=UTCDateTime(f"{base_date}{sheet['B12'].value}"),
+                endtime=parse_relative_time(base_date, sheet["B12"].value),
+                starttime=parse_relative_time(base_date, sheet["B12"].value),
             ),
             Absolute(
                 element="H",
                 absolute=sheet["C17"].value,
                 baseline=sheet["F17"].value,
-                endtime=UTCDateTime(f"{base_date}{sheet['B17'].value}"),
-                starttime=UTCDateTime(f"{base_date}{sheet['B17'].value}"),
+                endtime=parse_relative_time(base_date, sheet["B17"].value),
+                starttime=parse_relative_time(base_date, sheet["B17"].value),
             ),
             Absolute(
                 element="Z",
                 absolute=sheet["C22"].value,
                 baseline=sheet["F22"].value,
-                endtime=UTCDateTime(f"{base_date}{sheet['B22'].value}"),
-                starttime=UTCDateTime(f"{base_date}{sheet['B22'].value}"),
+                endtime=parse_relative_time(base_date, sheet["B22"].value),
+                starttime=parse_relative_time(base_date, sheet["B22"].value),
             ),
         ]
         return absolutes
 
-    def _parse_measurements(self, sheet, metadata) -> List[Measurement]:
+    def _parse_measurements(
+        self, sheet: openpyxl.worksheet, base_date: str
+    ) -> List[Measurement]:
         """Parse measurements from a measurement sheet.
         """
-        base_date = f"{metadata['year']}{metadata['date']}T"
         measurements = []
-
         for m in SPREADSHEET_MEASUREMENTS:
             measurement_type = m["type"]
             angle = "angle" in m and sheet[m["angle"]].value or None
             residual = "residual" in m and sheet[m["residual"]].value or None
             time = (
                 "time" in m
-                and UTCDateTime(f"{base_date}{sheet[m['time']].value}")
+                and parse_relative_time(base_date, sheet[m["time"]].value)
                 or None
             )
             measurements.append(
@@ -168,7 +185,10 @@ class SpreadsheetAbsolutesFactory(object):
         return measurements
 
     def _parse_metadata(
-        self, constants_sheet, measurement_sheet, summary_sheet
+        self,
+        constants_sheet: openpyxl.worksheet,
+        measurement_sheet: openpyxl.worksheet,
+        summary_sheet: openpyxl.worksheet,
     ) -> Dict:
         """Parse metadata from various sheets.
         """
@@ -181,8 +201,10 @@ class SpreadsheetAbsolutesFactory(object):
             )
         except:
             errors.append("Unable to read mark azimuth")
+        year = measurement_sheet["B8"].value
         return {
-            "date": f"{measurement_sheet['C8'].value:04}",
+            # pad in case month starts with zero (which is trimmed)
+            "date": f"{year}{measurement_sheet['C8'].value:04}",
             "di_scale": measurement_sheet["K8"].value,
             "errors": errors,
             "hemisphere": measurement_sheet["J8"].value,
@@ -193,5 +215,5 @@ class SpreadsheetAbsolutesFactory(object):
             "pier_name": summary_sheet["B5"].value,
             "station": measurement_sheet["A8"].value,
             "temperature": constants_sheet["J58"].value,
-            "year": measurement_sheet["B8"].value,
+            "year": year,
         }
