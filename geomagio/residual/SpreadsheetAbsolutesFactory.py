@@ -46,31 +46,6 @@ SPREADSHEET_MEASUREMENTS = [
 ]
 
 
-def _parse_float(sheet, cell, name) -> float:
-    try:
-        value = sheet[cell].value
-        return value and float(value) or None
-    except ValueError as e:
-        raise ValueError(f"Unable to parse {name} at {cell}") from e
-
-
-def _parse_int(sheet, cell, name) -> int:
-    try:
-        value = sheet[cell].value
-        return value and int(value) or None
-    except ValueError as e:
-        raise ValueError(f"Unable to parse {name} at {cell}") from e
-
-
-def _parse_time(sheet, cell, name, base_date) -> UTCDateTime:
-    try:
-        value = sheet[cell].value
-        print(f"{base_date}{value}", value)
-        return value and UTCDateTime(f"{base_date}{value}") or None
-    except Exception as e:
-        raise ValueError(f"Unable to parse {name} at {cell}") from e
-
-
 class SpreadsheetAbsolutesFactory(object):
     """Read absolutes from residual spreadsheets.
 
