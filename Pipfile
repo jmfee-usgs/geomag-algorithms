@@ -4,16 +4,19 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+black = "*"
+flake8 = "*"
+pre-commit = "*"
 pytest = "*"
 pytest-cov = "*"
 webtest = "*"
-black = "*"
 
 [packages]
 numpy = "*"
 scipy = "*"
 obspy = "*"
 pycurl = "*"
+# flask webservice
 authlib = "*"
 flask = "*"
 flask-login = "*"
@@ -21,7 +24,8 @@ flask-migrate = "*"
 flask-session = "*"
 flask-sqlalchemy = "*"
 psycopg2-binary = "*"
-pre-commit = "*"
+# residual method spreadsheets
+openpyxl = "*"
 
 [pipenv]
 allow_prereleases = true
