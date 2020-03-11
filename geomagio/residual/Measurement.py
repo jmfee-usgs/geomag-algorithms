@@ -13,6 +13,7 @@ class Measurement(object):
     angle: measured angle, decimal degrees.
     residual: residual at time of measurement.
     time: when measurement was taken.
+    ordinate: variometer data from time of measurement
     """
 
     def __init__(
@@ -21,8 +22,10 @@ class Measurement(object):
         angle: float = 0,
         residual: float = 0,
         time: Optional[UTCDateTime] = None,
+        ordinate=None,
     ):
         self.measurement_type = measurement_type
         self.angle = angle
         self.residual = residual
         self.time = time
+        self.ordinate = ordinate
