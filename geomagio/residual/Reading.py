@@ -44,14 +44,6 @@ class Reading(BaseModel):
         """
         return {a.element: a for a in self.absolutes}
 
-    def calculate_D(self) -> List[Absolute]:
-        D_TYPES = ["WestDown", "EastDown", "WestUp", "EastUp"]
-        termA1_1 = np.arcsin(
-            res_avg("WestDown") / math.sqrt((WDh + Hb) ** 2 + (WDe) ** 2)
-        ) * (180 / math.pi)
-        termA1_2 = np.arctan(WDe / (WDh + Hb)) * (180 / math.pi)
-        A1 = westDown - termA1_1 - termA1_2
-
     def calculate_absolutes(self, f, I, pier_correction):
         I = np.deg2rad(I)
         Fabs = f + pier_correction
@@ -59,6 +51,12 @@ class Reading(BaseModel):
         Zabs = Fabs * np.sin(I)
 
         return Fabs, Habs, Zabs
+
+    def calculate_baselines(self, Habs, Zabs, h_mean, e_mean, z_mean):
+        Hb = math.sqrt(Habs ** 2 - e_mean ** 2) - h_mean
+        Zb = Zabs - z_mean
+
+        return Hb, Zb
 
     def calculate_scale(self, f, last_two, time_delta):
         I = np.deg2rad(I)
@@ -123,8 +121,9 @@ class Reading(BaseModel):
         ND_I = calc_I(0, ang_avg("NorthDown"), 1, res_avg("NorthDown"), f_ND)
         # average each measurement's inclination angle
         I = np.average(SD_I, NU_I, SU_I, ND_I)
+        # FIXME: NEED TO BUILD IN ITERATIONS
 
-        return fmean, I
+        return I
 
     def measurement_index(self) -> Dict[MeasurementType, List[Measurement]]:
         """Generate index of measurements keyed by MeasurementType.
