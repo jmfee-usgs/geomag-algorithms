@@ -1,10 +1,7 @@
-from typing import Optional
-
-from obspy.core import UTCDateTime
 from .MeasurementType import MeasurementType
 
 
-class Measurement(object):
+class Ordinate(object):
     """One angle and time measurement with optional residual.
 
     Attributes
@@ -19,11 +16,13 @@ class Measurement(object):
     def __init__(
         self,
         measurement_type: MeasurementType,
-        angle: float = 0,
-        residual: float = 0,
-        time: Optional[UTCDateTime] = None,
+        h: float = 0,
+        e: float = 0,
+        z: float = 0,
+        f: float = 0,
     ):
         self.measurement_type = measurement_type
-        self.angle = angle
-        self.residual = residual
-        self.time = time
+        self.h = h
+        self.e = e
+        self.z = z
+        self.f = f
