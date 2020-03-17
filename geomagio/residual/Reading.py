@@ -5,6 +5,14 @@ from .Absolute import Absolute
 from .Measurement import Measurement
 from .MeasurementType import MeasurementType
 from .Ordinate import Ordinate
+from .Calculation import (
+    calculate_scale,
+    calculate_inclination,
+    calculate_I,
+    calculate_f,
+    calculate_baselines,
+    calculate_absolutes,
+)
 
 
 class Reading(object):
@@ -40,8 +48,21 @@ class Reading(object):
         """
         return {a.element: a for a in self.absolutes}
 
-    def calculate_absolutes(self):
-        raise "Need to implement"
+    def calculate(self):
+        # gather class object to perform calculations
+        metadata = self.metadata
+        ordinates = self.ordinates
+        measurements = self.measurements
+        # calculate inclination
+        inclination, f, ordinate = calculate_I(measurements, ordinates, metadata)
+        # calculate absolutes
+        Habs, Zabs, Fabs = calculate_absolutes(
+            f, inclination, metadata["pier_correction"]
+        )
+        # calculate baselines
+        Hb, Zb = calculate_baselines(Habs, Zabs, ordinate)
+        # calculate scale value for declination
+        calculate_scale(f, measurements, inclination, metadata["pier_correction"])
 
     def measurement_index(self) -> Dict[MeasurementType, List[Measurement]]:
         """Generate index of measurements keyed by MeasurementType.
