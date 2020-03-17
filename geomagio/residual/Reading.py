@@ -49,8 +49,8 @@ class Reading(object):
     def calculate(self):
         # gather class object to perform calculations
         metadata = self.metadata
-        ordinates = self.ordinates
-        measurements = self.measurements
+        ordinates = self.ordinate_index
+        measurements = self.measurement_index
         # calculate inclination
         inclination, f, ordinate = calculate_I(measurements, ordinates, metadata)
         # calculate absolutes
