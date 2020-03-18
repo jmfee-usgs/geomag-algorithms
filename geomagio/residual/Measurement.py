@@ -2,7 +2,6 @@ from typing import Optional
 
 from obspy.core import UTCDateTime
 from .MeasurementType import MeasurementType
-from .Ordinate import Ordinate
 
 
 class Measurement(object):
@@ -23,10 +22,8 @@ class Measurement(object):
         angle: float = 0,
         residual: float = 0,
         time: Optional[UTCDateTime] = None,
-        ordinate: Optional[Ordinate] = None,
     ):
         self.measurement_type = measurement_type
         self.angle = angle
         self.residual = residual
         self.time = time
-        self.ordinate = ordinate
