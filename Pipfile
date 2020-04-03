@@ -5,7 +5,10 @@ verify_ssl = true
 
 [dev-packages]
 black = "*"
+<<<<<<< HEAD
 flake8 = "*"
+=======
+>>>>>>> master
 pre-commit = "*"
 pytest = "*"
 pytest-cov = "*"
@@ -14,18 +17,27 @@ webtest = "*"
 [packages]
 numpy = "*"
 scipy = "*"
-obspy = "*"
+obspy = ">1.2.0"
 pycurl = "*"
 # flask webservice
 authlib = "*"
+
+fastapi = "*"
+pydantic = "*"
+uvicorn = "*"
+
 flask = "*"
 flask-login = "*"
 flask-migrate = "*"
 flask-session = "*"
 flask-sqlalchemy = "*"
 psycopg2-binary = "*"
+<<<<<<< HEAD
 # residual method spreadsheets
 openpyxl = "*"
+=======
+gunicorn = "*"
+>>>>>>> master
 
 [pipenv]
 allow_prereleases = true

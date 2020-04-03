@@ -1,28 +1,26 @@
-from __future__ import absolute_import, unicode_literals
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
+from werkzeug.serving import run_simple
 
-import os
-import flask
-
-from . import data
-from . import database
-from . import login
-from . import session
+from .public_app import create_app as create_public_app
+from .restricted_app import create_app as create_restricted_app
 
 
 def create_app():
-    app = flask.Flask(__name__)
-    # configure using environment variables
-    app.config.update(os.environ)
+    public_app = create_public_app()
+    restricted_app = create_restricted_app()
+    application = DispatcherMiddleware(public_app, {"/restricted": restricted_app})
 
-    # connect modules
-    database.init_app(app)
-    login.init_app(app)
-    session.init_app(app)
-    data.init_app(app)
+    return application
 
-    # add default route
-    @app.route("/")
-    def index():
-        return flask.render_template("index.html")
 
-    return app
+application = create_app()
+
+if __name__ == "__main__":
+    run_simple(
+        hostname="localhost",
+        port=5000,
+        application=application,
+        use_reloader=True,
+        use_debugger=True,
+        use_evalex=True,
+    )
