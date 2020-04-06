@@ -1,10 +1,6 @@
 import json
 import urllib
-<<<<<<< HEAD
-from typing import Dict, IO, List, Mapping
-=======
 from typing import Dict, IO, List, Mapping, Optional, Union
->>>>>>> master
 
 from obspy.core import UTCDateTime
 

@@ -1,9 +1,5 @@
 import os
-<<<<<<< HEAD
-from typing import Dict, List
-=======
 from typing import Dict, IO, List, Mapping, Optional, Union
->>>>>>> master
 
 from obspy.core import UTCDateTime
 import openpyxl
@@ -13,10 +9,6 @@ from .Measurement import Measurement
 from .MeasurementType import MeasurementType as mt
 from .Reading import Reading
 from . import Angle
-<<<<<<< HEAD
-from .Ordinate import Ordinate
-=======
->>>>>>> master
 
 
 SPREADSHEET_MEASUREMENTS = [
@@ -50,163 +42,7 @@ SPREADSHEET_MEASUREMENTS = [
     {"type": mt.SOUTH_UP, "angle": "D42", "residual": "E42", "time": "B42"},
     {"type": mt.NORTH_DOWN, "angle": "D43", "residual": "E43", "time": "B43"},
     {"type": mt.NORTH_DOWN, "angle": "D44", "residual": "E44", "time": "B44"},
-<<<<<<< HEAD
-    # scaling
-    {"type": mt.NORTH_DOWN_SCALE, "angle": "D44", "residual": "E44", "time": "B44"},
-    {"type": mt.NORTH_DOWN_SCALE, "angle": "D45", "residual": "E45", "time": "B45"},
-]
-
-SPREADSHEET_ORDINATES = [
-    # declination
-    {
-        "type": mt.WEST_DOWN,
-        "h": "F19",
-        "e": "G19",
-        "z": "H19",
-        "f": "F19",
-        "time": "B19",
-    },
-    {
-        "type": mt.WEST_DOWN,
-        "h": "F20",
-        "e": "G20",
-        "z": "H20",
-        "f": "F20",
-        "time": "B20",
-    },
-    {
-        "type": mt.EAST_DOWN,
-        "h": "F21",
-        "e": "G21",
-        "z": "H19",
-        "f": "F21",
-        "time": "B21",
-    },
-    {
-        "type": mt.EAST_DOWN,
-        "h": "F22",
-        "e": "G22",
-        "z": "H20",
-        "f": "F22",
-        "time": "B22",
-    },
-    {
-        "type": mt.WEST_UP,
-        "h": "F23",
-        "e": "G23",
-        "z": "H19",
-        "f": "F23",
-        "time": "B23",
-    },
-    {
-        "type": mt.WEST_UP,
-        "h": "F24",
-        "e": "G24",
-        "z": "H20",
-        "f": "F24",
-        "time": "B24",
-    },
-    {
-        "type": mt.EAST_UP,
-        "h": "F25",
-        "e": "G25",
-        "z": "H19",
-        "f": "F25",
-        "time": "B25",
-    },
-    {
-        "type": mt.EAST_UP,
-        "h": "F26",
-        "e": "G26",
-        "z": "H20",
-        "f": "F26",
-        "time": "B26",
-    },
-    # inclination
-    {
-        "type": mt.SOUTH_DOWN,
-        "h": "C50",
-        "e": "D50",
-        "z": "E50",
-        "f": "B50",
-        "time": "A50",
-    },
-    {
-        "type": mt.SOUTH_DOWN,
-        "h": "C51",
-        "e": "D51",
-        "z": "E51",
-        "f": "B51",
-        "time": "A51",
-    },
-    {
-        "type": mt.NORTH_UP,
-        "h": "C52",
-        "e": "D52",
-        "z": "E52",
-        "f": "B52",
-        "time": "A52",
-    },
-    {
-        "type": mt.NORTH_UP,
-        "h": "C53",
-        "e": "D53",
-        "z": "E53",
-        "f": "B53",
-        "time": "A53",
-    },
-    {
-        "type": mt.SOUTH_UP,
-        "h": "C54",
-        "e": "D54",
-        "z": "E54",
-        "f": "B54",
-        "time": "A54",
-    },
-    {
-        "type": mt.SOUTH_UP,
-        "h": "C55",
-        "e": "D55",
-        "z": "E55",
-        "f": "B55",
-        "time": "A55",
-    },
-    {
-        "type": mt.NORTH_DOWN,
-        "h": "C56",
-        "e": "D56",
-        "z": "E56",
-        "f": "B56",
-        "time": "A56",
-    },
-    {
-        "type": mt.NORTH_DOWN,
-        "h": "C57",
-        "e": "D57",
-        "z": "E57",
-        "f": "B57",
-        "time": "A57",
-    },
-    # scaling
-    {
-        "type": mt.NORTH_DOWN_SCALE,
-        "h": "C57",
-        "e": "D57",
-        "z": "E57",
-        "f": "B57",
-        "time": "A57",
-    },
-    {
-        "type": mt.NORTH_DOWN_SCALE,
-        "h": "C58",
-        "e": "D58",
-        "z": "E58",
-        "f": "B58",
-        "time": "A58",
-    },
-=======
     {"type": mt.NORTH_DOWN, "angle": "D45", "residual": "E45", "time": "B45"},
->>>>>>> master
 ]
 
 
@@ -279,16 +115,7 @@ class SpreadsheetAbsolutesFactory(object):
         absolutes = self._parse_absolutes(summary_sheet, metadata["date"])
         measurements = (
             include_measurements
-<<<<<<< HEAD
-            and self._parse_measurements(measurement_sheet, metadata["date"],)
-            or None
-        )
-        ordinates = (
-            include_measurements
-            and self._parse_ordinates(measurement_sheet, metadata["date"],)
-=======
             and self._parse_measurements(measurement_sheet, metadata["date"])
->>>>>>> master
             or None
         )
         return Reading(
@@ -298,10 +125,6 @@ class SpreadsheetAbsolutesFactory(object):
             measurements=measurements,
             metadata=metadata,
             pier_correction=metadata["pier_correction"],
-<<<<<<< HEAD
-            ordinates=ordinates,
-=======
->>>>>>> master
         )
 
     def _parse_absolutes(
@@ -361,33 +184,6 @@ class SpreadsheetAbsolutesFactory(object):
             )
         return measurements
 
-<<<<<<< HEAD
-    def _parse_ordinates(
-        self, sheet: openpyxl.worksheet, base_date: str
-    ) -> List[Ordinate]:
-        """Parse ordinates from a measurement sheet.
-        """
-        ordinates = []
-        for m in SPREADSHEET_ORDINATES:
-            measurement_type = m["type"]
-            h = "h" in m and sheet[m["h"]].value or None
-            e = "e" in m and sheet[m["e"]].value or None
-            z = "z" in m and sheet[m["z"]].value or None
-            f = "f" in m and sheet[m["f"]].value or None
-            time = (
-                "time" in m
-                and parse_relative_time(base_date, sheet[m["time"]].value)
-                or None
-            )
-            ordinates.append(
-                Ordinate(
-                    measurement_type=measurement_type, h=h, e=e, z=z, f=f, time=time,
-                )
-            )
-        return ordinates
-
-=======
->>>>>>> master
     def _parse_metadata(
         self,
         constants_sheet: openpyxl.worksheet,

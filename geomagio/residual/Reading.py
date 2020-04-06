@@ -1,16 +1,6 @@
 import collections
 from typing import Dict, List, Optional
 
-<<<<<<< HEAD
-from .Absolute import Absolute
-from .Measurement import Measurement
-from .MeasurementType import MeasurementType
-from .Ordinate import Ordinate
-from .Calculation import calculate
-
-
-class Reading(object):
-=======
 from pydantic import BaseModel
 
 from .Absolute import Absolute
@@ -19,7 +9,6 @@ from .MeasurementType import MeasurementType
 
 
 class Reading(BaseModel):
->>>>>>> master
     """A collection of absolute measurements.
 
     Attributes
@@ -32,46 +21,22 @@ class Reading(BaseModel):
     pier_correction: pier correction value, nT.
     """
 
-<<<<<<< HEAD
-    def __init__(
-        self,
-        absolutes: Optional[List[Absolute]] = None,
-        azimuth: float = 0,
-        hemisphere: float = 1,  # maybe hemisphere should be calculated from latitude
-        measurements: Optional[List[Measurement]] = None,
-        metadata: Optional[Dict] = None,
-        ordinates: Optional[List[Ordinate]] = None,
-        pier_correction: float = 0,
-    ):
-        self.absolutes = absolutes or []
-        self.measurements = measurements or []
-        self.metadata = metadata or []
-        self.ordinates = ordinates or []
-=======
     absolutes: Optional[List[Absolute]] = None
     azimuth: float = 0
     hemisphere: float = 1  # maybe hemisphere should be calculated from latitude
     measurements: Optional[List[Measurement]] = []
     metadata: Optional[Dict] = []
     pier_correction: float = 0
->>>>>>> master
 
     def absolutes_index(self) -> Dict[str, Absolute]:
         """Generate index of absolutes keyed by element.
         """
         return {a.element: a for a in self.absolutes}
 
-<<<<<<< HEAD
-    # FIXME: Move method into calculation module. Make a method in this module that updates absolutes
-    def update_absolutes(self):
-        self.absolutes = calculate(self)
-        return self.absolutes
-=======
     def calculate_absolutes(self) -> List[Absolute]:
         """Use measurements and metadata to (re)calculate absolutes.
         """
         raise NotImplementedError("TODO: implement this")
->>>>>>> master
 
     def measurement_index(self) -> Dict[MeasurementType, List[Measurement]]:
         """Generate index of measurements keyed by MeasurementType.
@@ -83,17 +48,3 @@ class Reading(BaseModel):
         for m in self.measurements:
             index[m.measurement_type].append(m)
         return index
-<<<<<<< HEAD
-
-    def ordinate_index(self) -> Dict[MeasurementType, List[Ordinate]]:
-        """Generate index of ordinates keyed by MeasurementType.
-
-        Any missing MeasurementType returns an empty list.
-        There may be multiple ordinates of each MeasurementType.
-        """
-        index = collections.defaultdict(list)
-        for o in self.ordinates:
-            index[o.measurement_type].append(o)
-        return index
-=======
->>>>>>> master

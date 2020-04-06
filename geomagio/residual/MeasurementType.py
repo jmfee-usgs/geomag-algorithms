@@ -1,10 +1,6 @@
 import enum
 
-<<<<<<< HEAD
-# FIXME: add another measurement type that is a scaling measurement type
-=======
 
->>>>>>> master
 class MeasurementType(str, enum.Enum):
     """Measurement types used during absolutes."""
 
@@ -28,9 +24,3 @@ class MeasurementType(str, enum.Enum):
     NORTH_UP = "NorthUp"
     SOUTH_UP = "SouthUp"
     NORTH_DOWN = "NorthDown"
-<<<<<<< HEAD
-
-    # scaling
-    NORTH_DOWN_SCALE = "NorthDownScale"
-=======
->>>>>>> master
