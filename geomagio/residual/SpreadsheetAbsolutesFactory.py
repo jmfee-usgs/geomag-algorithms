@@ -1,5 +1,9 @@
 import os
+<<<<<<< HEAD
 from typing import Dict, List
+=======
+from typing import Dict, IO, List, Mapping, Optional, Union
+>>>>>>> master
 
 from obspy.core import UTCDateTime
 import openpyxl
@@ -9,7 +13,10 @@ from .Measurement import Measurement
 from .MeasurementType import MeasurementType as mt
 from .Reading import Reading
 from . import Angle
+<<<<<<< HEAD
 from .Ordinate import Ordinate
+=======
+>>>>>>> master
 
 
 SPREADSHEET_MEASUREMENTS = [
@@ -43,6 +50,7 @@ SPREADSHEET_MEASUREMENTS = [
     {"type": mt.SOUTH_UP, "angle": "D42", "residual": "E42", "time": "B42"},
     {"type": mt.NORTH_DOWN, "angle": "D43", "residual": "E43", "time": "B43"},
     {"type": mt.NORTH_DOWN, "angle": "D44", "residual": "E44", "time": "B44"},
+<<<<<<< HEAD
     # scaling
     {"type": mt.NORTH_DOWN_SCALE, "angle": "D44", "residual": "E44", "time": "B44"},
     {"type": mt.NORTH_DOWN_SCALE, "angle": "D45", "residual": "E45", "time": "B45"},
@@ -196,6 +204,9 @@ SPREADSHEET_ORDINATES = [
         "f": "B58",
         "time": "A58",
     },
+=======
+    {"type": mt.NORTH_DOWN, "angle": "D45", "residual": "E45", "time": "B45"},
+>>>>>>> master
 ]
 
 
@@ -268,12 +279,16 @@ class SpreadsheetAbsolutesFactory(object):
         absolutes = self._parse_absolutes(summary_sheet, metadata["date"])
         measurements = (
             include_measurements
+<<<<<<< HEAD
             and self._parse_measurements(measurement_sheet, metadata["date"],)
             or None
         )
         ordinates = (
             include_measurements
             and self._parse_ordinates(measurement_sheet, metadata["date"],)
+=======
+            and self._parse_measurements(measurement_sheet, metadata["date"])
+>>>>>>> master
             or None
         )
         return Reading(
@@ -283,7 +298,10 @@ class SpreadsheetAbsolutesFactory(object):
             measurements=measurements,
             metadata=metadata,
             pier_correction=metadata["pier_correction"],
+<<<<<<< HEAD
             ordinates=ordinates,
+=======
+>>>>>>> master
         )
 
     def _parse_absolutes(
@@ -343,6 +361,7 @@ class SpreadsheetAbsolutesFactory(object):
             )
         return measurements
 
+<<<<<<< HEAD
     def _parse_ordinates(
         self, sheet: openpyxl.worksheet, base_date: str
     ) -> List[Ordinate]:
@@ -367,6 +386,8 @@ class SpreadsheetAbsolutesFactory(object):
             )
         return ordinates
 
+=======
+>>>>>>> master
     def _parse_metadata(
         self,
         constants_sheet: openpyxl.worksheet,

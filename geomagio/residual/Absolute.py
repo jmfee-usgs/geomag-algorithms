@@ -1,8 +1,19 @@
 from typing import Optional
+<<<<<<< HEAD
 from obspy import UTCDateTime
 
 
 class Absolute(object):
+=======
+
+from obspy import UTCDateTime
+from pydantic import BaseModel
+
+from .. import pydantic_utcdatetime
+
+
+class Absolute(BaseModel):
+>>>>>>> master
     """Computed absolute and baseline measurement.
 
     Attributes
@@ -18,6 +29,7 @@ class Absolute(object):
     valid: whether values are considered valid.
     """
 
+<<<<<<< HEAD
     def __init__(
         self,
         element: str,
@@ -35,6 +47,15 @@ class Absolute(object):
         self.endtime = endtime
         self.shift = shift
         self.valid = valid
+=======
+    element: str
+    absolute: Optional[float] = None
+    baseline: Optional[float] = None
+    starttime: Optional[UTCDateTime] = None
+    endtime: Optional[UTCDateTime] = None
+    shift: float = 0
+    valid: bool = True
+>>>>>>> master
 
     def is_valid(self) -> bool:
         return (

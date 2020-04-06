@@ -19,12 +19,23 @@ numpy = "*"
 scipy = "*"
 obspy = ">1.2.0"
 pycurl = "*"
+<<<<<<< HEAD
 # flask webservice
 authlib = "*"
+=======
+>>>>>>> master
 
+authlib = "*"
+cryptography = "*"
+databases = {extras = ["postgresql", "sqlite"],version = "*"}
 fastapi = "*"
-pydantic = "*"
+httpx = "==0.11.1"
+openpyxl = "*"
+orm = "*"
+pydantic = "==1.4"
+sqlalchemy = "*"
 uvicorn = "*"
+<<<<<<< HEAD
 
 flask = "*"
 flask-login = "*"
@@ -37,6 +48,9 @@ psycopg2-binary = "*"
 openpyxl = "*"
 =======
 gunicorn = "*"
+>>>>>>> master
+=======
+typesystem = "==0.2.4"
 >>>>>>> master
 
 [pipenv]
