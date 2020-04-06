@@ -5,10 +5,6 @@ verify_ssl = true
 
 [dev-packages]
 black = "*"
-<<<<<<< HEAD
-flake8 = "*"
-=======
->>>>>>> master
 pre-commit = "*"
 pytest = "*"
 pytest-cov = "*"
@@ -19,11 +15,6 @@ numpy = "*"
 scipy = "*"
 obspy = ">1.2.0"
 pycurl = "*"
-<<<<<<< HEAD
-# flask webservice
-authlib = "*"
-=======
->>>>>>> master
 
 authlib = "*"
 cryptography = "*"
