@@ -80,7 +80,7 @@ def run(
     input_timeseries: Stream = None,
     input_type: str = "variation",
     output_channels: List[str] = None,
-    realtime_interval: int = None,
+    realtime_interval: int = 600,
     rename_input_channels: Dict[str, str] = None,
     rename_output_channels: Dict[str, str] = None,
     trim=True,
@@ -88,6 +88,12 @@ def run(
     input_channels = input_channels or algorithm.get_input_channels()
     output_channels = output_channels or algorithm.get_output_channels()
     next_starttime = algorithm.get_next_starttime()
+    # translate realtime to start/end times
+    if not starttime and not endtime:
+        # calculate endtime/starttime
+        now = UTCDateTime()
+        endtime = UTCDateTime(now.year, now.month, now.day, now.hour, now.minute)
+        starttime = endtime - realtime_interval
     starttime = next_starttime or starttime
     # input
     timeseries = input_timeseries or _get_input_timeseries(
@@ -145,8 +151,8 @@ def run_as_update(
     input_factory: TimeseriesFactory,
     observatories: List[str],
     output_factory: TimeseriesFactory,
-    starttime: UTCDateTime,
-    endtime: UTCDateTime,
+    starttime: UTCDateTime = None,
+    endtime: UTCDateTime = None,
     input_channels: List[str] = None,
     input_interval: str = "second",
     input_type: str = "variation",
@@ -154,7 +160,7 @@ def run_as_update(
     output_interval: str = "second",
     output_observatories: List[str] = None,
     output_type: str = "variation",
-    realtime_interval: int = None,
+    realtime_interval: int = 600,
     rename_input_channels: Dict[str, str] = None,
     rename_output_channels: Dict[str, str] = None,
     update_limit: int = 0,
@@ -186,6 +192,12 @@ def run_as_update(
     input_channels = input_channels or algorithm.get_input_channels()
     output_channels = output_channels or algorithm.get_output_channels()
     output_observatories = output_observatories or observatories
+    # translate realtime to start/end times
+    if not starttime and not endtime:
+        # calculate endtime/starttime
+        now = UTCDateTime()
+        endtime = UTCDateTime(now.year, now.month, now.day, now.hour, now.minute)
+        starttime = endtime - realtime_interval
     print(
         "checking gaps",
         starttime,
