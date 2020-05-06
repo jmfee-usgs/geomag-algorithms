@@ -10,23 +10,30 @@ from geomagio.algorithm import Algorithm, AlgorithmException
 
 def _get_input_timeseries(
     algorithm: Algorithm,
-    factory: TimeseriesFactory,
+    input_channels: List[str],
+    input_factory: TimeseriesFactory,
+    input_interval: str,
+    input_type: str,
     observatories: List[str],
-    channels: List[str],
     starttime: UTCDateTime,
     endtime: UTCDateTime,
 ) -> Stream:
     timeseries = Stream()
     for observatory in observatories:
         input_start, input_end = algorithm.get_input_interval(
-            start=starttime, end=endtime, observatory=observatory, channels=channels
+            start=starttime,
+            end=endtime,
+            observatory=observatory,
+            channels=input_channels,
         )
         if input_start is not None and input_end is not None:
-            timeseries += factory.get_timeseries(
+            timeseries += input_factory.get_timeseries(
                 observatory=observatory,
+                channels=input_channels,
+                interval=input_interval,
+                type=input_type,
                 starttime=input_start,
                 endtime=input_end,
-                channels=channels,
             )
     return timeseries
 
@@ -40,15 +47,23 @@ def _rename_channels(timeseries: Stream, renames: Dict[str, str]) -> Stream:
 
 
 def _get_output_timeseries(
-    factory: TimeseriesFactory, observatories: List[str], channels, starttime, endtime
+    observatories: List[str],
+    output_channels: List[str],
+    output_factory: TimeseriesFactory,
+    output_interval: str,
+    output_type: str,
+    starttime,
+    endtime,
 ) -> Stream:
     timeseries = Stream()
     for observatory in observatories:
-        timeseries += factory.get_timeseries(
+        timeseries += output_factory.get_timeseries(
             observatory=observatory,
+            channels=output_channels,
+            interval=output_interval,
+            type=output_type,
             starttime=starttime,
             endtime=endtime,
-            channels=channels,
         )
     return timeseries
 
@@ -61,7 +76,9 @@ def run(
     starttime: UTCDateTime,
     endtime: UTCDateTime,
     input_channels: List[str] = None,
+    input_interval: str = "second",
     input_timeseries: Stream = None,
+    input_type: str = "variation",
     output_channels: List[str] = None,
     realtime_interval: int = None,
     rename_input_channels: Dict[str, str] = None,
@@ -75,11 +92,13 @@ def run(
     # input
     timeseries = input_timeseries or _get_input_timeseries(
         algorithm=algorithm,
-        factory=input_factory,
+        input_factory=input_factory,
+        input_channels=input_channels,
+        input_interval=input_interval,
+        input_type=input_type,
         observatories=observatories,
         starttime=starttime,
         endtime=endtime,
-        channels=input_channels,
     )
     if timeseries.count() == 0:
         # no data to process
@@ -129,8 +148,12 @@ def run_as_update(
     starttime: UTCDateTime,
     endtime: UTCDateTime,
     input_channels: List[str] = None,
+    input_interval: str = "second",
+    input_type: str = "variation",
     output_channels: List[str] = None,
+    output_interval: str = "second",
     output_observatories: List[str] = None,
+    output_type: str = "variation",
     realtime_interval: int = None,
     rename_input_channels: Dict[str, str] = None,
     rename_output_channels: Dict[str, str] = None,
@@ -173,11 +196,13 @@ def run_as_update(
     )
     # request output to see what has already been generated
     output_timeseries = _get_output_timeseries(
-        factory=output_factory,
         observatories=output_observatories,
+        output_channels=output_channels,
+        output_factory=output_factory,
+        output_interval=output_interval,
+        output_type=output_type,
         starttime=starttime,
         endtime=endtime,
-        channels=output_channels,
     )
     if len(output_timeseries) > 0:
         # find gaps in output, so they can be updated
@@ -197,11 +222,13 @@ def run_as_update(
         gap_starttime, gap_endtime = output_gap[0], output_gap[1]
         input_timeseries = _get_input_timeseries(
             algorithm=algorithm,
-            factory=input_factory,
+            input_channels=input_channels,
+            input_factory=input_factory,
+            input_interval=input_interval,
+            input_type=input_type,
             observatories=observatories,
             starttime=gap_starttime,
             endtime=gap_endtime,
-            channels=input_channels,
         )
         if not algorithm.can_produce_data(
             starttime=gap_starttime, endtime=gap_endtime, stream=input_timeseries
@@ -215,11 +242,15 @@ def run_as_update(
             update_endtime = starttime - 1
             run_as_update(
                 algorithm=algorithm,
-                input_factory=input_factory,
-                observatories=observatories,
-                output_factory=output_factory,
                 input_channels=input_channels,
+                input_factory=input_factory,
+                input_interval=input_interval,
+                input_type=input_type,
+                observatories=observatories,
                 output_channels=output_channels,
+                output_factory=output_factory,
+                output_interval=output_interval,
+                output_type=output_type,
                 realtime_interval=realtime_interval,
                 rename_input_channels=rename_input_channels,
                 rename_output_channels=rename_output_channels,
@@ -241,11 +272,13 @@ def run_as_update(
         )
         run(
             algorithm=algorithm,
-            input_factory=input_factory,
-            observatories=observatories,
-            output_factory=output_factory,
             input_channels=input_channels,
+            input_factory=input_factory,
+            input_interval=input_interval,
+            input_type=input_type,
+            observatories=observatories,
             output_channels=output_channels,
+            output_factory=output_factory,
             realtime_interval=realtime_interval,
             rename_input_channels=rename_input_channels,
             rename_output_channels=rename_output_channels,

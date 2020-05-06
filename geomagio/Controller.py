@@ -52,95 +52,6 @@ class Controller(object):
         self._algorithm = algorithm
         self._outputFactory = outputFactory
 
-    def _get_input_timeseries(self, observatory, channels, starttime, endtime):
-        """Get timeseries from the input factory for requested options.
-
-        Parameters
-        ----------
-        observatory : array_like
-            observatories to request.
-        channels : array_like
-            channels to request.
-        starttime : obspy.core.UTCDateTime
-            time of first sample to request.
-        endtime : obspy.core.UTCDateTime
-            time of last sample to request.
-        renames : array_like
-            list of channels to rename
-            each list item should be array_like:
-                the first element is the channel to rename,
-                the last element is the new channel name
-
-        Returns
-        -------
-        timeseries : obspy.core.Stream
-        """
-        timeseries = Stream()
-        for obs in observatory:
-            # get input interval for observatory
-            # do this per observatory in case an
-            # algorithm needs different amounts of data
-            input_start, input_end = self._algorithm.get_input_interval(
-                start=starttime, end=endtime, observatory=obs, channels=channels
-            )
-            if input_start is None or input_end is None:
-                continue
-            timeseries += self._inputFactory.get_timeseries(
-                observatory=obs,
-                starttime=input_start,
-                endtime=input_end,
-                channels=channels,
-            )
-        return timeseries
-
-    def _rename_channels(self, timeseries, renames):
-        """Rename trace channel names.
-
-        Parameters
-        ----------
-        timeseries : obspy.core.Stream
-            stream with channels to rename
-        renames : array_like
-            list of channels to rename
-            each list item should be array_like:
-                the first element is the channel to rename,
-                the last element is the new channel name
-
-        Returns
-        -------
-        timeseries : obspy.core.Stream
-        """
-        for r in renames:
-            from_name, to_name = r[0], r[-1]
-            for t in timeseries.select(channel=from_name):
-                t.stats.channel = to_name
-        return timeseries
-
-    def _get_output_timeseries(self, observatory, channels, starttime, endtime):
-        """Get timeseries from the output factory for requested options.
-
-        Parameters
-        ----------
-        observatory : array_like
-            observatories to request.
-        channels : array_like
-            channels to request.
-        starttime : obspy.core.UTCDateTime
-            time of first sample to request.
-        endtime : obspy.core.UTCDateTime
-            time of last sample to request.
-
-        Returns
-        -------
-        timeseries : obspy.core.Stream
-        """
-        timeseries = Stream()
-        for obs in observatory:
-            timeseries += self._outputFactory.get_timeseries(
-                observatory=obs, starttime=starttime, endtime=endtime, channels=channels
-            )
-        return timeseries
-
     def run(self, options, input_timeseries=None):
         """run controller
         Parameters
@@ -156,6 +67,8 @@ class Controller(object):
             algorithm=self._algorithm,
             input_channels=options.inchannels,
             input_factory=self._inputFactory,
+            input_interval=self._inputFactory.interval,
+            input_type=self._inputFactory.type,
             input_timeseries=input_timeseries,
             observatories=options.observatory,
             output_channels=options.outchannels,
@@ -198,9 +111,13 @@ class Controller(object):
             algorithm=self._algorithm,
             input_channels=options.inchannels,
             input_factory=self._inputFactory,
+            input_interval=self._inputFactory.interval,
+            input_type=self._inputFactory.type,
             observatories=options.observatory,
             output_channels=options.outchannels,
             output_factory=self._outputFactory,
+            output_interval=self._outputFactory.interval,
+            output_type=self._outputFactory.type,
             realtime_interval=options.realtime,
             starttime=options.starttime,
             endtime=options.endtime,
