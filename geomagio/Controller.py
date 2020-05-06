@@ -7,6 +7,7 @@ import sys
 from io import BytesIO
 from obspy.core import Stream, UTCDateTime
 from .algorithm import algorithms, AlgorithmException
+from .processing import run, run_as_update
 from .PlotTimeseriesFactory import PlotTimeseriesFactory
 from .StreamTimeseriesFactory import StreamTimeseriesFactory
 from . import TimeseriesUtility, Util
@@ -151,54 +152,27 @@ class Controller(object):
             Used by run_as_update to save a double input read, since it has
             already read the input to confirm data can be produced.
         """
-        algorithm = self._algorithm
-        input_channels = options.inchannels or algorithm.get_input_channels()
-        output_channels = options.outchannels or algorithm.get_output_channels()
-        next_starttime = algorithm.get_next_starttime()
-        starttime = next_starttime or options.starttime
-        endtime = options.endtime
-        # input
-        timeseries = input_timeseries or self._get_input_timeseries(
-            observatory=options.observatory,
-            starttime=starttime,
-            endtime=endtime,
-            channels=input_channels,
-        )
-        if timeseries.count() == 0:
-            # no data to process
-            return
-        # pre-process
-        if next_starttime and options.realtime:
-            # when running a stateful algorithms with the realtime option
-            # pad/trim timeseries to the interval:
-            # [next_starttime, max(timeseries.endtime, now-options.realtime)]
-            input_start, input_end = TimeseriesUtility.get_stream_start_end_times(
-                timeseries, without_gaps=True
-            )
-            realtime_gap = endtime - options.realtime
-            if input_end < realtime_gap:
-                input_end = realtime_gap
-            # pad to the start of the "realtime gap"
-            TimeseriesUtility.pad_timeseries(timeseries, next_starttime, input_end)
-        # process
-        if options.rename_input_channel:
-            timeseries = self._rename_channels(
-                timeseries=timeseries, renames=options.rename_input_channel
-            )
-        processed = algorithm.process(timeseries)
-        # trim if --no-trim is not set
-        if not options.no_trim:
-            processed.trim(starttime=starttime, endtime=endtime)
-        if options.rename_output_channel:
-            processed = self._rename_channels(
-                timeseries=processed, renames=options.rename_output_channel
-            )
-        # output
-        self._outputFactory.put_timeseries(
-            timeseries=processed,
-            starttime=starttime,
-            endtime=endtime,
-            channels=output_channels,
+        run(
+            algorithm=self._algorithm,
+            input_channels=options.inchannels,
+            input_factory=self._inputFactory,
+            input_timeseries=input_timeseries,
+            observatories=options.observatory,
+            output_channels=options.outchannels,
+            output_factory=self._outputFactory,
+            realtime_interval=options.realtime,
+            starttime=options.starttime,
+            endtime=options.endtime,
+            rename_input_channels=(
+                options.rename_input_channel
+                and {c[0]: c[1] for c in options.rename_input_channel}
+                or None
+            ),
+            rename_output_channels=(
+                options.rename_output_channel
+                and {c[0]: c[1] for c in options.rename_output_channel}
+                or None
+            ),
         )
 
     def run_as_update(self, options, update_count=0):
@@ -220,77 +194,29 @@ class Controller(object):
             if new data is available there as well. Calls run for each new
             period, oldest to newest.
         """
-        # If an update_limit is set, make certain we don't step past it.
-        if options.update_limit != 0:
-            if update_count >= options.update_limit:
-                return
-        algorithm = self._algorithm
-        if algorithm.get_next_starttime() is not None:
-            raise AlgorithmException("Stateful algorithms cannot use run_as_update")
-        input_channels = options.inchannels or algorithm.get_input_channels()
-        output_observatory = options.output_observatory
-        output_channels = options.outchannels or algorithm.get_output_channels()
-        print(
-            "checking gaps",
-            options.starttime,
-            options.endtime,
-            output_observatory,
-            output_channels,
-            file=sys.stderr,
-        )
-        # request output to see what has already been generated
-        output_timeseries = self._get_output_timeseries(
-            observatory=options.output_observatory,
+        run_as_update(
+            algorithm=self._algorithm,
+            input_channels=options.inchannels,
+            input_factory=self._inputFactory,
+            observatories=options.observatory,
+            output_channels=options.outchannels,
+            output_factory=self._outputFactory,
+            realtime_interval=options.realtime,
             starttime=options.starttime,
             endtime=options.endtime,
-            channels=output_channels,
+            rename_input_channels=(
+                options.rename_input_channel
+                and {c[0]: c[1] for c in options.rename_input_channel}
+                or None
+            ),
+            rename_output_channels=(
+                options.rename_output_channel
+                and {c[0]: c[1] for c in options.rename_output_channel}
+                or None
+            ),
+            output_observatories=options.output_observatory,
+            update_limit=options.update_limit,
         )
-        if len(output_timeseries) > 0:
-            # find gaps in output, so they can be updated
-            output_gaps = TimeseriesUtility.get_merged_gaps(
-                TimeseriesUtility.get_stream_gaps(output_timeseries)
-            )
-        else:
-            output_gaps = [
-                [
-                    options.starttime,
-                    options.endtime,
-                    # next sample time not used
-                    None,
-                ]
-            ]
-        for output_gap in output_gaps:
-            input_timeseries = self._get_input_timeseries(
-                observatory=options.observatory,
-                starttime=output_gap[0],
-                endtime=output_gap[1],
-                channels=input_channels,
-            )
-            if not algorithm.can_produce_data(
-                starttime=output_gap[0], endtime=output_gap[1], stream=input_timeseries
-            ):
-                continue
-            # check for fillable gap at start
-            if output_gap[0] == options.starttime:
-                # found fillable gap at start, recurse to previous interval
-                interval = options.endtime - options.starttime
-                starttime = options.starttime - interval
-                endtime = options.starttime - 1
-                options.starttime = starttime
-                options.endtime = endtime
-                self.run_as_update(options, update_count + 1)
-            # fill gap
-            options.starttime = output_gap[0]
-            options.endtime = output_gap[1]
-            print(
-                "processing",
-                options.starttime,
-                options.endtime,
-                output_observatory,
-                output_channels,
-                file=sys.stderr,
-            )
-            self.run(options, input_timeseries)
 
 
 def get_input_factory(args):
