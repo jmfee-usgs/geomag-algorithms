@@ -1,6 +1,7 @@
 """Controller class for geomag algorithms"""
 import sys
-from typing import Dict, List
+import threading
+from typing import Callable, Dict, List
 
 from obspy.core import Stream, UTCDateTime
 
@@ -12,8 +13,6 @@ def _get_input_timeseries(
     algorithm: Algorithm,
     input_channels: List[str],
     input_factory: TimeseriesFactory,
-    input_interval: str,
-    input_type: str,
     observatories: List[str],
     starttime: UTCDateTime,
     endtime: UTCDateTime,
@@ -30,8 +29,6 @@ def _get_input_timeseries(
             timeseries += input_factory.get_timeseries(
                 observatory=observatory,
                 channels=input_channels,
-                interval=input_interval,
-                type=input_type,
                 starttime=input_start,
                 endtime=input_end,
             )
@@ -50,8 +47,6 @@ def _get_output_timeseries(
     observatories: List[str],
     output_channels: List[str],
     output_factory: TimeseriesFactory,
-    output_interval: str,
-    output_type: str,
     starttime,
     endtime,
 ) -> Stream:
@@ -60,8 +55,6 @@ def _get_output_timeseries(
         timeseries += output_factory.get_timeseries(
             observatory=observatory,
             channels=output_channels,
-            interval=output_interval,
-            type=output_type,
             starttime=starttime,
             endtime=endtime,
         )
@@ -76,9 +69,7 @@ def run(
     starttime: UTCDateTime,
     endtime: UTCDateTime,
     input_channels: List[str] = None,
-    input_interval: str = "second",
     input_timeseries: Stream = None,
-    input_type: str = "variation",
     output_channels: List[str] = None,
     realtime_interval: int = 600,
     rename_input_channels: Dict[str, str] = None,
@@ -100,8 +91,6 @@ def run(
         algorithm=algorithm,
         input_factory=input_factory,
         input_channels=input_channels,
-        input_interval=input_interval,
-        input_type=input_type,
         observatories=observatories,
         starttime=starttime,
         endtime=endtime,
@@ -154,12 +143,8 @@ def run_as_update(
     starttime: UTCDateTime = None,
     endtime: UTCDateTime = None,
     input_channels: List[str] = None,
-    input_interval: str = "second",
-    input_type: str = "variation",
     output_channels: List[str] = None,
-    output_interval: str = "second",
     output_observatories: List[str] = None,
-    output_type: str = "variation",
     realtime_interval: int = 600,
     rename_input_channels: Dict[str, str] = None,
     rename_output_channels: Dict[str, str] = None,
@@ -211,8 +196,6 @@ def run_as_update(
         observatories=output_observatories,
         output_channels=output_channels,
         output_factory=output_factory,
-        output_interval=output_interval,
-        output_type=output_type,
         starttime=starttime,
         endtime=endtime,
     )
@@ -236,8 +219,6 @@ def run_as_update(
             algorithm=algorithm,
             input_channels=input_channels,
             input_factory=input_factory,
-            input_interval=input_interval,
-            input_type=input_type,
             observatories=observatories,
             starttime=gap_starttime,
             endtime=gap_endtime,
@@ -256,13 +237,9 @@ def run_as_update(
                 algorithm=algorithm,
                 input_channels=input_channels,
                 input_factory=input_factory,
-                input_interval=input_interval,
-                input_type=input_type,
                 observatories=observatories,
                 output_channels=output_channels,
                 output_factory=output_factory,
-                output_interval=output_interval,
-                output_type=output_type,
                 realtime_interval=realtime_interval,
                 rename_input_channels=rename_input_channels,
                 rename_output_channels=rename_output_channels,
@@ -286,8 +263,6 @@ def run_as_update(
             algorithm=algorithm,
             input_channels=input_channels,
             input_factory=input_factory,
-            input_interval=input_interval,
-            input_type=input_type,
             observatories=observatories,
             output_channels=output_channels,
             output_factory=output_factory,
@@ -299,3 +274,11 @@ def run_as_update(
             endtime=gap_endtime,
             input_timeseries=input_timeseries,
         )
+
+
+def run_concurrent(tasks: List[Callable[[...], None]]):
+    threads = [threading.Thread(target=task) for task in tasks]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
