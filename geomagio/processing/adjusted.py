@@ -76,7 +76,7 @@ def adjusted_1hz(host: str, observatory: str, adjusted_statefile: str):
 
 
 def adjusted_1minute(
-    host: str, observatory: str, sqdist_statefile: str, adjusted_statefile: str
+    host: str, observatory: str, adjusted_statefile: str, sqdist_statefile: str
 ):
     legacy_adjusted(
         host=host,
