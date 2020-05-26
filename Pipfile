@@ -28,6 +28,7 @@ typing = "*"
 typing-extensions = "*"
 uvicorn = "*"
 gunicorn = "*"
+typer = "*"
 
 [pipenv]
 allow_prereleases = true
