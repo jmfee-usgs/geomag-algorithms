@@ -273,6 +273,7 @@ class MiniSeedFactory(TimeseriesFactory):
             stats.station,
             stats.location,
         )
+        out.stats = stats
         out.data = converted
         return out
 

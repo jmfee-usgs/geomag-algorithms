@@ -988,13 +988,11 @@ class ObservatoryMetadata(object):
             return
         # copy in standard metadata
         metadata = self.metadata[observatory]["metadata"]
-        for key in metadata:
-            stats[key] = metadata[key]
+        stats.update(metadata)
         # copy in interval specific metadata
         interval_specific = self.interval_specific
         if "interval_specific" in self.metadata[observatory]:
             interval_specific = self.metadata[observatory]["interval_specific"]
         # stats['data_interval_type'] = data_interval_type[interval]
         if interval in interval_specific:
-            for key in interval_specific[interval]:
-                stats[key] = interval_specific[interval][key]
+            stats.update(interval_specific[interval])

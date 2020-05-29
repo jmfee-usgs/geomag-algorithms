@@ -113,6 +113,7 @@ class TimeseriesFactory(object):
         urlIntervals = Util.get_intervals(
             starttime=starttime, endtime=endtime, size=self.urlInterval
         )
+        print(urlIntervals)
         for urlInterval in urlIntervals:
             url = self._get_url(
                 observatory=observatory,
@@ -122,18 +123,31 @@ class TimeseriesFactory(object):
                 channels=channels,
             )
             try:
-                data = Util.read_url(url)
+                if url.startswith("file://"):
+                    url_file = Util.get_file_from_url(url, createParentDirectory=True)
+                    data = None
+                    if os.path.isfile(url_file):
+                        # parse file directly
+                        timeseries += self.parse_file(
+                            path=url_file,
+                            observatory=observatory,
+                            type=type,
+                            interval=interval,
+                            channels=channels,
+                        )
+                else:
+                    # read url and parse string
+                    data = Util.read_url(url)
+                    timeseries += self.parse_string(
+                        data,
+                        observatory=observatory,
+                        type=type,
+                        interval=interval,
+                        channels=channels,
+                    )
             except IOError as e:
                 print("Error reading url: %s, continuing" % str(e), file=sys.stderr)
                 continue
-            try:
-                timeseries += self.parse_string(
-                    data,
-                    observatory=observatory,
-                    type=type,
-                    interval=interval,
-                    channels=channels,
-                )
             except NotImplementedError:
                 raise NotImplementedError('"get_timeseries" not implemented')
             except Exception as e:
@@ -153,6 +167,20 @@ class TimeseriesFactory(object):
             fill_value=numpy.nan,
         )
         return timeseries
+
+    def parse_file(self, path, **kwargs):
+        """Try to parse a file.
+
+        This implementation reads the file and uses self.parse_string to parse.
+
+        Parameters
+        ----------
+        path : str
+            path to file containing content
+        """
+        existing_data = Util.read_file(path)
+        existing_data = self.parse_string(existing_data, **kwargs)
+        return existing_data
 
     def parse_string(self, data, **kwargs):
         """Creates error message that this functions is not implemented by
@@ -242,9 +270,8 @@ class TimeseriesFactory(object):
             # existing data file, merge new data into existing
             if os.path.isfile(url_file):
                 try:
-                    existing_data = Util.read_file(url_file)
-                    existing_data = self.parse_string(
-                        existing_data,
+                    existing_data = self.parse_file(
+                        path=url_file,
                         observatory=url_data[0].stats.station,
                         type=type,
                         interval=interval,
@@ -253,12 +280,13 @@ class TimeseriesFactory(object):
                     # TODO: make parse_string return the correct location code
                     for trace in existing_data:
                         # make location codes match, just in case
-                        new_trace = url_data.select(
+                        new_traces = url_data.select(
                             network=trace.stats.network,
                             station=trace.stats.station,
                             channel=trace.stats.channel,
-                        )[0]
-                        trace.stats.location = new_trace.stats.location
+                        )
+                        if len(new_traces) > 0:
+                            trace.stats.location = new_traces[0].stats.location
                     url_data = TimeseriesUtility.merge_streams(existing_data, url_data)
                 except IOError:
                     # no data yet
@@ -274,11 +302,24 @@ class TimeseriesFactory(object):
                 pad=True,
                 fill_value=numpy.nan,
             )
-            with open(url_file, "wb") as fh:
-                try:
-                    self.write_file(fh, url_data, channels)
-                except NotImplementedError:
-                    raise NotImplementedError('"put_timeseries" not implemented')
+            self.write_path(url_file, url_data, channels)
+
+    def write_path(self, path, timeseries, channels):
+        """Write timeseries data to the given file path.
+
+        Opens file for writing, then calls self.write_file.
+
+        Parameters
+        ----------
+        path: file where data is written.
+        timeseries: traces to store.
+        channels: channels to store.
+        """
+        with open(path, "wb") as fh:
+            try:
+                self.write_file(fh, timeseries, channels)
+            except NotImplementedError:
+                raise NotImplementedError('"put_timeseries" not implemented')
 
     def write_file(self, fh, timeseries, channels):
         """Write timeseries data to the given file object.
@@ -384,7 +425,7 @@ class TimeseriesFactory(object):
 
         Parameters
         ----------
-        interval : {'daily', 'hourly', 'minute', 'monthly', 'second'}
+        interval : {'daily', 'hourly', 'minute', 'monthly', 'second', 'tenhertz'}
 
         Returns
         -------
@@ -406,6 +447,8 @@ class TimeseriesFactory(object):
             interval_abbr = "mon"
         elif interval == "second":
             interval_abbr = "sec"
+        elif interval == "tenhertz":
+            interval_abbr = "thz"
         else:
             raise TimeseriesFactoryException('Unexpected interval "%s"' % interval)
         return interval_abbr
@@ -417,7 +460,7 @@ class TimeseriesFactory(object):
 
         Parameters
         ----------
-        interval : {'minute', 'second'}
+        interval : {'minute', 'second', 'tenhertz'}
 
         Returns
         -------
@@ -433,6 +476,8 @@ class TimeseriesFactory(object):
             interval_name = "OneMinute"
         elif interval == "second":
             interval_name = "OneSecond"
+        elif interval == "tenhertz":
+            interval_name = "TenHertz"
         else:
             raise TimeseriesFactoryException('Unsupported interval "%s"' % interval)
         return interval_name

@@ -29,6 +29,7 @@ typing-extensions = "*"
 uvicorn = "*"
 gunicorn = "*"
 typer = "*"
+cdflib = "*"
 
 [pipenv]
 allow_prereleases = true
