@@ -1,0 +1,29 @@
+FROM debian:buster
+
+# install python3
+RUN apt-get update  \
+    && apt-get install -y \
+        wget \
+        python3 \
+        pipenv \
+    && apt-get clean -y
+
+# install obspy
+RUN wget --quiet -O - \
+        https://raw.githubusercontent.com/obspy/obspy/master/misc/debian/public.key \
+        | apt-key add - \
+    && echo 'deb http://deb.obspy.org buster main' >> /etc/apt/sources.list \
+    && apt-get update \
+    && apt-get install -y \
+        pipenv \
+        python3-obspy \
+        python3-pycurl \
+    && apt-get clean -y
+
+# install dependencies via pipenv
+WORKDIR /geomag-algorithms
+COPY Pipfile Pipfile.lock /geomag-algorithms/
+RUN pipenv --site-packages install --dev --keep-outdated --skip-lock --system
+
+# copy library after dependencies (ignores set in .dockerignore)
+COPY . /geomag-algorithms
